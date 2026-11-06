@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#b9ddf5">
+<title>Our Little Sky</title>
+<style>
+:root {
+  --site-primary: #B9DDF5;
+  --site-secondary: #DCEEFF;
+  --site-background: #F5FAFF;
+  --site-on-primary: #183B59;
+  --site-on-secondary: #294B68;
+  --site-on-background: #24435F;
+  --site-font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --site-font-heading: Georgia, 'Times New Roman', serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  --ink: #294B68;
+  --muted: #6F8DA8;
+  --line: #D5E8F7;
+  --white: #FFFFFF;
+  --blue: #8CBDE4;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--site-font-body); color: var(--ink); background: light-dark(#F5FAFF,#142333); }
+#app { min-height: 100vh; width: 100%; border-radius: 0; color: light-dark(var(--ink),#E2F1FC); background-color: light-dark(var(--site-background),#142333); overflow: hidden; position: relative; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+.nav { display:flex; justify-content:space-between; align-items:center; padding: 20px clamp(18px,5vw,72px); position:absolute; top:0; left:0; right:0; z-index:5; }
+.brand { font-family:var(--site-font-heading); font-size:20px; letter-spacing:.04em; }
+.navlinks { display:flex; gap:clamp(12px,2.5vw,30px); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#547894; }
+.navlinks a:hover { color:#1D5B88; }
+.hero { min-height:720px; height:100svh; max-height:900px; display:grid; place-items:center; position:relative; text-align:center; padding:100px 20px 70px; background: radial-gradient(ellipse at 50% 25%,#FFFFFF 0%,#EAF6FF 42%,#CDE7F9 100%); isolation:isolate; }
+.hero:before,.hero:after { content:""; position:absolute; border-radius:50%; background:rgba(255,255,255,.58); filter:blur(1px); z-index:-1; }
+.hero:before { width:360px;height:110px;left:-70px;top:24%;box-shadow:90px -24px 0 -14px rgba(255,255,255,.62),150px 14px 0 -18px rgba(255,255,255,.48); }
+.hero:after { width:300px;height:90px;right:-80px;top:53%;box-shadow:-80px -20px 0 -12px rgba(255,255,255,.58),-140px 15px 0 -20px rgba(255,255,255,.48); }
+.sun { position:absolute; width:180px;height:180px;border-radius:50%; background:rgba(255,255,255,.52); top:17%; left:50%; transform:translateX(-50%); filter:blur(2px); z-index:-1; }
+.hero-content { max-width:760px; animation: rise 1.2s ease both; }
+.eyebrow { text-transform:uppercase; letter-spacing:.28em; font-size:11px; color:#7198B8; }
+h1 { font-family:var(--site-font-heading); font-size:clamp(56px,10vw,112px); font-weight:400; line-height:.98; letter-spacing:-.045em; margin:24px 0 20px; color:#315F83; }
+.hero p { font-family:var(--site-font-heading); font-style:italic; font-size:clamp(18px,2.5vw,24px); color:#6487A4; line-height:1.6; margin:0 auto 34px; }
+.cta { display:inline-flex; align-items:center; gap:12px; border:1px solid rgba(85,139,181,.35); border-radius:99px; padding:14px 22px; color:#315F83; background:rgba(255,255,255,.55); cursor:pointer; transition:.25s; }
+.cta:hover { background:#fff; transform:translateY(-3px); box-shadow:0 12px 30px rgba(76,135,180,.14); }
+.scrollhint { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); color:#7C9DB8; font-size:10px; letter-spacing:.22em; text-transform:uppercase; }
+main { max-width:1120px; margin:auto; padding:0 clamp(20px,5vw,64px) 100px; }
+.section { padding:100px 0 25px; }
+.section-head { text-align:center; margin-bottom:46px; }
+.kicker { color:#7CA5C4; text-transform:uppercase; letter-spacing:.24em; font-size:10px; }
+h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-weight:400; color:#315F83; margin:12px 0; }
+.section-head p { color:var(--muted); font-size:14px; }
+.intro-card { max-width:760px; margin:0 auto; padding:clamp(28px,5vw,54px); background:rgba(255,255,255,.76); border:1px solid #E1EFF9; border-radius:24px; text-align:center; box-shadow:0 20px 60px rgba(91,145,185,.08); }
+.intro-card .bigquote { font-family:var(--site-font-heading); font-size:clamp(22px,3vw,30px); line-height:1.55; color:#527B9D; }
+.intro-card p { color:#7994AA; line-height:1.9; font-size:14px; }
+.timeline { max-width:900px; margin:0 auto; position:relative; padding:22px 0 34px; }
+.timeline-route { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+.timeline-route path { fill:none; stroke:#A9D0EC; stroke-width:4; stroke-linecap:round; stroke-dasharray:3 13; }
+.timeline-traveler { position:absolute; z-index:4; left:50%; top:0; transform:translate(-50%,-50%); width:66px;height:66px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.94);border:1px solid #D7EAF8;box-shadow:0 8px 24px rgba(76,132,174,.18);font-size:31px;will-change:top; }
+.timeline-traveler:after { content:'♡';position:absolute;right:-5px;top:-7px;color:#E99CB8;font-size:17px; }
+.moment { min-height:205px;display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;position:relative;margin:0; }
+.moment:nth-child(odd) .moment-card { grid-column:1;grid-row:1;text-align:right;justify-self:end; }
+.moment:nth-child(even) .moment-card { grid-column:3;grid-row:1;text-align:left;justify-self:start; }
+.moment .moment-card { width:min(100%,330px);opacity:0;transform:translateY(28px) scale(.94);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1);background:#fff;border:1px solid #DCECF8;border-radius:18px;padding:14px;box-shadow:0 12px 32px rgba(91,145,185,.09);position:relative; }
+.moment.is-visible .moment-card { opacity:1;transform:translateY(0) scale(1); }
+.moment-card:after { content:'✦';position:absolute;top:-12px;right:18px;color:#9BC6E6;font-size:19px; }
+.moment:nth-child(even) .moment-card:after { right:auto;left:18px; }
+.moment-card img,.moment-photo-placeholder { display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:linear-gradient(140deg,#EAF6FF,#C6E2F5);margin-bottom:12px; }
+.moment-photo-placeholder { display:grid;place-items:center;color:#83B2D5;font-size:34px; }
+.moment-card h3 { font-family:var(--site-font-heading);font-size:21px;font-weight:400;color:#416F93;margin:0 0 6px; }
+.moment-card p { color:#8199AD;font-size:12px;line-height:1.65;margin:0; }
+.moment-date { color:#7BA1C0;font-size:10px;letter-spacing:.1em;padding:0 12px;grid-column:2;grid-row:1;text-align:center; }
+.moment-pin { width:13px;height:13px;border-radius:50%;background:#8CBDE4;border:3px solid #F5FAFF;box-shadow:0 0 0 1px #A8CDE9;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2; }
+.timeline-empty {text-align:center;color:#89A8C0;font-size:13px;padding:24px;}
+.gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+.photo { background:#fff; padding:12px 12px 20px; border-radius:5px; box-shadow:0 12px 30px rgba(77,126,164,.12); transform:rotate(var(--tilt)); transition:.3s; }
+.photo:hover { transform:rotate(0) translateY(-7px); }
+.photo-art { aspect-ratio:4/5; display:grid; place-items:center; background:linear-gradient(145deg,#DCEEFF,#A9D1EF); color:#6F9DC1; position:relative; overflow:hidden; }
+.photo-art:before { content:""; width:160px;height:65px;position:absolute;top:28%;left:-20px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:80px -22px 0 -10px rgba(255,255,255,.6),180px 14px 0 -12px rgba(255,255,255,.5); }
+.photo-art span { font-family:var(--site-font-heading); font-size:42px; opacity:.8; z-index:1; }
+.photo-caption { text-align:center; padding-top:14px; font-family:var(--site-font-heading); color:#6487A4; font-style:italic; font-size:15px; }
+.photo small { display:block; text-align:center; color:#9CB2C4; margin-top:6px; font-size:10px; letter-spacing:.08em; }
+.adventures { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.adventure { min-height:220px; border-radius:22px; padding:28px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(145deg,#D9EDFC,#A9D1EF); color:#426F92; position:relative; overflow:hidden; }
+.adventure:nth-child(2) { background:linear-gradient(145deg,#E8F4FC,#C0DDF2); }
+.adventure:before { content:"✧"; position:absolute; top:15px;right:25px; font-size:60px; color:rgba(255,255,255,.7); }
+.adventure h3 { font-family:var(--site-font-heading); font-weight:400; font-size:27px; margin:0 0 7px; }
+.adventure p { margin:0; font-size:13px; color:#6689A6; }
+.letter { max-width:760px; margin:auto; padding:clamp(28px,6vw,60px); background:#fff; border:1px solid #E2EFF8; border-radius:4px; box-shadow:0 16px 50px rgba(91,145,185,.1); position:relative; }
+.letter:before { content:"♡"; position:absolute; top:18px;right:25px; font-size:28px; color:#A8CDE9; }
+.letter h3 { font-family:var(--site-font-heading); font-size:30px; font-weight:400; color:#416F93; margin:0 0 24px; }
+.letter p { color:#718DA5; line-height:2; font-size:14px; }
+.letter .sign { font-family:var(--site-font-heading); font-style:italic; font-size:22px; color:#527B9D; margin-top:30px; }
+.footer { text-align:center; padding:60px 20px 42px; color:#86A5BE; font-size:12px; letter-spacing:.08em; }
+.footer .heart { color:#83B7DF; font-size:20px; display:block; margin-bottom:12px; }
+.edit-note { text-align:center; color:#8AA5BB; font-size:11px; margin-top:18px; }
+.admin-link { border:1px solid #B9D7EE; border-radius:99px; padding:9px 13px; background:rgba(255,255,255,.72); color:#416F93; cursor:pointer; font-size:11px; }
+.admin-panel { display:none; position:fixed; inset:0; z-index:20; background:rgba(29,62,88,.35); padding:24px; overflow:auto; }
+.admin-panel.open { display:grid; place-items:center; }
+.admin-card { width:min(760px,100%); max-height:90vh; overflow:auto; background:#F8FCFF; border:1px solid #CFE4F4; border-radius:24px; padding:clamp(22px,4vw,38px); box-shadow:0 25px 80px rgba(27,72,108,.25); }
+.admin-head { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.admin-head h2 { font-size:30px; margin:0; }
+.admin-close,.admin-action { border:1px solid #B9D7EE; background:white; color:#416F93; border-radius:99px; padding:10px 15px; cursor:pointer; }
+.admin-status { margin:18px 0; padding:14px 16px; border-radius:14px; background:#E7F3FC; color:#416F93; font-size:13px; line-height:1.7; }
+.admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.admin-field { display:flex; flex-direction:column; gap:7px; color:#5C7E9A; font-size:12px; }
+.admin-field input,.admin-field textarea { width:100%; border:1px solid #CFE2F1; border-radius:12px; padding:12px; background:white; color:#294B68; font:inherit; }
+.admin-field textarea { min-height:90px; resize:vertical; }
+.admin-section { border-top:1px solid #DCEAF5; margin-top:22px; padding-top:20px; }
+.admin-section h3 { color:#416F93; font-family:var(--site-font-heading); font-weight:400; font-size:23px; }
+.admin-muted { color:#7893A9; font-size:12px; line-height:1.7; }
+.admin-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.memory-tools { max-width:760px; margin:24px auto 0; text-align:center; }
+.memory-tools p { color:var(--muted); font-size:12px; line-height:1.7; }
+.memory-card { background:#fff; border:1px solid #E1EFF9; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(91,145,185,.07); }
+.memory-card img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
+.memory-card-body { padding:16px; }
+.memory-card h3 { margin:0 0 6px; font:400 22px var(--site-font-heading); color:#416F93; }
+.memory-card time { color:#8AA5BB; font-size:11px; }
+.memory-card p { color:#718DA5; font-size:13px; line-height:1.7; white-space:pre-wrap; }
+.memory-card-actions { display:flex; gap:8px; }
+.memory-card-actions button { border:1px solid #B9D7EE; background:white; color:#416F93; border-radius:99px; padding:7px 12px; cursor:pointer; font-size:11px; }
+.admin-status.error { background:#FCEEEE; color:#934C55; }
+.admin-status.success { background:#EAF7EF; color:#397653; }
+.admin-hidden { display:none!important; }
+.admin-card > .admin-section:nth-of-type(5) { display:none; }
+@media(max-width:600px){.admin-grid{grid-template-columns:1fr}.admin-panel{padding:10px}.nav{padding-right:14px}.brand{font-size:16px}}
+@keyframes rise { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@media (max-width:700px) { .nav { align-items:flex-start; } .navlinks { gap:10px; flex-wrap:wrap; justify-content:flex-end; max-width:210px; font-size:9px; } .hero { min-height:680px; } .timeline {margin:0 -8px;} .moment {grid-template-columns:1fr 58px 1fr;min-height:190px;} .moment .moment-card {width:100%;padding:9px;border-radius:14px;} .moment-card img,.moment-photo-placeholder {aspect-ratio:3/4;margin-bottom:8px;} .moment-card h3 {font-size:16px;} .moment-card p {font-size:10px;line-height:1.45;} .moment-date {font-size:8px;padding:0 3px;letter-spacing:.04em;} .timeline-traveler {width:52px;height:52px;font-size:25px;} .gallery { grid-template-columns:repeat(2,1fr); gap:14px; } .gallery .photo:last-child { display:none; } .adventures { grid-template-columns:1fr; } .section { padding-top:75px; } }
+@media (prefers-reduced-motion: reduce) { html {scroll-behavior:auto;} *,*:before,*:after {animation:none!important;transition:none!important;} }
+
+/* Horizontal memory rail */
+.memory-rail-section{margin:76px calc(clamp(20px,5vw,64px) * -1) 20px;padding:64px 0 78px;background:linear-gradient(180deg,rgba(225,241,253,.55),rgba(245,250,255,.9));overflow:hidden}
+.memory-rail-heading{text-align:center;padding:0 22px 30px}
+.memory-rail-heading .kicker{margin-bottom:10px}
+.memory-rail-heading h3{font:400 clamp(27px,4vw,42px) var(--site-font-heading);color:#416F93;margin:8px 0}
+.memory-rail-heading p{font-size:13px;color:#7895AD}
+.memory-rail-viewport{overflow:hidden;width:100%;padding:12px 0 28px}
+.memory-rail{display:flex;align-items:center;gap:clamp(20px,3vw,38px);width:max-content;padding:0 max(7vw,24px);will-change:transform}
+.rail-photo{width:clamp(220px,27vw,330px);flex:0 0 auto;background:#fff;padding:12px 12px 22px;box-shadow:0 18px 42px rgba(67,117,153,.16);border:1px solid #e5eff7;transform:rotate(var(--rail-tilt));transition:transform .35s,box-shadow .35s}
+.rail-photo:hover{transform:rotate(0deg) translateY(-8px);box-shadow:0 24px 48px rgba(67,117,153,.2)}
+.rail-photo img,.rail-photo .rail-placeholder{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:linear-gradient(145deg,#e7f4fd,#b9d9f0)}
+.rail-photo .rail-placeholder{display:grid;place-items:center;color:#729bb9;font:42px Georgia,serif}
+.rail-photo-caption{text-align:center;padding:15px 5px 0;font:italic 17px Georgia,serif;color:#527b9d;white-space:normal;overflow-wrap:anywhere}
+.rail-photo-date{text-align:center;margin-top:7px;font-size:10px;letter-spacing:.1em;color:#91aabd}
+.memory-rail-empty{text-align:center;color:#8ba7bd;font-size:13px;padding:18px}
+@media(max-width:700px){.memory-rail-section{margin-left:-20px;margin-right:-20px;padding:48px 0 54px}.rail-photo{width:72vw;max-width:290px}.memory-rail{gap:18px;padding:0 22px}}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="nav">
+    <a class="brand" href="#home">Our Little Sky ♡</a>
+    <div class="navlinks"><a href="#story">Our story</a><a href="#timeline">Timeline</a><a href="#memories">Memories</a><a href="#letter">A letter</a><button class="admin-link" id="openAdmin">Manage ♡</button></div>
+  </nav>
+  <header class="hero" id="home">
+    <div class="sun"></div>
+    <div class="hero-content">
+      <div class="eyebrow">A little place for our forever</div>
+      <h1>Our Little<br>Sky</h1>
+      <p>Under the same sky,<br>making memories with you.</p>
+      <a class="cta" href="#story">Explore our story <span>↓</span></a>
+    </div>
+    <div class="scrollhint">Scroll to wander · ♡</div>
+  </header>
+  <main>
+    <section class="section" id="story">
+      <div class="section-head"><div class="kicker">Two hearts, one story</div><h2>It was always you</h2><p>A small universe made from all our little moments.</p></div>
+      <div class="intro-card">
+        <div class="bigquote">“Somewhere between hello and forever, you became my favorite person.”</div>
+        <p>This is our little corner of the world — a place to keep the days, the places, the laughter, and all the tiny things that mean everything. Every page is waiting for one of our memories.</p>
+      </div>
+    </section>
+    <section class="section" id="timeline">
+      <div class="section-head"><div class="kicker">The days that became us</div><h2>Our timeline</h2><p>Every beginning deserves to be remembered.</p></div>
+      <div class="timeline" id="storyTimeline">
+        <svg class="timeline-route" viewBox="0 0 400 820" preserveAspectRatio="none" aria-hidden="true"><path id="timelineRoutePath" d="M200 12 C200 90 95 95 95 180 S305 270 305 360 S95 450 95 540 S305 630 305 710 S200 770 200 808"/></svg>
+        <div class="timeline-traveler" id="timelineTraveler" aria-label="A little couple walking together">🧑🏻‍🤝‍🧑🏻</div>
+        <div id="timelineStops"><div class="timeline-empty">Our little journey is waiting for its first memory ♡</div></div>
+      </div>
+    </section>
+    <section class="section" id="memories">
+      <div class="section-head"><div class="kicker">Little snapshots of forever</div><h2>Our memories</h2><p>Replace these dreamy placeholders with your favorite photos together.</p></div>
+      <div class="gallery" id="memoryGallery"><div class="photo" style="--tilt:-2deg"><div class="photo-art"><span>☁</span></div><div class="photo-caption">Your memories will live here</div><small>Sign in to see your shared album</small></div></div>
+
+      <section class="memory-rail-section" id="memoryRailSection" aria-label="Horizontal memory track">
+        <div class="memory-rail-heading"><div class="kicker">One little moment at a time</div><h3>Memories along the way</h3><p>Scroll to wander through our little collection.</p></div>
+        <div class="memory-rail-viewport"><div class="memory-rail" id="memoryRail"><div class="memory-rail-empty">Sign in to see your memories here ♡</div></div></div>
+      </section>
+      <div class="memory-tools" id="memoryNotice"><p>Sign in through “Manage ♡” to view your private shared memories and photos.</p></div>
+    </section>
+    <section class="section" id="adventures">
+      <div class="section-head"><div class="kicker">Everywhere feels special with you</div><h2>Our adventures</h2><p>Places we've been, and all the places still waiting for us.</p></div>
+      <div class="adventures">
+        <div class="adventure"><h3>Places we've been</h3><p>Add your trips, dates, and favorite little discoveries.</p></div>
+        <div class="adventure"><h3>Places to go</h3><p>A growing wish list for our next adventures together.</p></div>
+      </div>
+    </section>
+    <section class="section" id="letter">
+      <div class="section-head"><div class="kicker">A few words from my heart</div><h2>For you, always</h2><p>The most important part of this little website.</p></div>
+      <article class="letter">
+        <h3>My dearest love,</h3>
+        <p>I made this little place for us, because I never want to forget the beautiful moments we've shared. The big adventures, the quiet days, the silly jokes, and all the little things that make being with you feel like home.</p>
+        <p>Thank you for being part of my days and for making my world brighter. I hope that when you look through these memories, you can feel just how much each one means to me.</p>
+        <p>And this is only the beginning. There are so many skies to see, places to visit, and memories left for us to make.</p>
+        <div class="sign">With all my love, always ♡</div>
+      </article>
+    </section>
+  </main>
+  <footer class="footer"><span class="heart">♡</span>MADE WITH LOVE, JUST FOR US<br><br>Our Little Sky · The story continues</footer>
+</div>
+<div class="admin-panel" id="adminPanel" aria-hidden="true">
+  <section class="admin-card" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+    <div class="admin-head"><div><div class="kicker">A private space for two</div><h2 id="adminTitle">Our memory studio</h2></div><button class="admin-close" id="closeAdmin">Close ✕</button></div>
+    <div class="admin-status" id="backendStatus">Loading secure connection…</div>
+    <div class="admin-section" id="authSection"><h3>Private sign in</h3><div class="admin-grid"><label class="admin-field">Email address<input id="authEmail" type="email" placeholder="Your email" autocomplete="username"></label><label class="admin-field">Password<input id="authPassword" type="password" placeholder="Your password" autocomplete="current-password"></label></div><div class="admin-actions"><button class="admin-action" id="signInButton">Sign in</button><button class="admin-action admin-hidden" id="signOutButton">Sign out</button></div><p class="admin-muted">Only two invited accounts can enter. Your account is the administrator; your girlfriend's account is view-only.</p></div>
+    <div class="admin-section admin-hidden" id="memoryEditor"><h3 id="memoryFormTitle">Add a memory</h3><input id="memoryId" type="hidden"><div class="admin-grid"><label class="admin-field">Memory title<input id="memoryTitle" placeholder="A day I'll always remember" maxlength="120"></label><label class="admin-field">Date<input id="memoryDate" type="date"></label></div><label class="admin-field" style="margin-top:14px">Your story<textarea id="memoryStory" placeholder="Write down what happened..."></textarea></label><label class="admin-field" style="margin-top:14px">Photo upload<input id="memoryPhotos" type="file" accept="image/*" multiple></label><div class="admin-actions"><button class="admin-action" id="saveMemoryButton">Save memory</button><button class="admin-action" id="cancelEditButton" type="button">Clear form</button></div><p class="admin-muted">Photos are stored in a private cloud bucket and remain available after you close the browser.</p></div>
+    <div class="admin-section"><h3>Connect your online backend</h3><p class="admin-muted">Project URL: https://ixslwtshfbxhxsgdybvk.supabase.co<br>Publishable key: received and configured in this site's public client settings. Publishable keys are intended for browser use; database security must come from Row Level Security (RLS). Never put a service_role or secret key in website code.</p><p class="admin-muted">Next: in Supabase, open SQL Editor and run the setup SQL below. Then disable public sign-ups and create/invite both of your email accounts. This starter policy grants access to authenticated project users, so keep sign-ups disabled and invite only the two of you.</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#EAF4FC;padding:14px;border-radius:12px;color:#315F83;font-size:11px;line-height:1.6">create table if not exists public.memories (\n  id uuid primary key default gen_random_uuid(),\n  title text not null,\n  memory_date date,\n  story text default '',\n  photo_paths text[] not null default '{}',\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\nalter table public.memories enable row level security;\ncreate policy \"Members can read memories\" on public.memories for select to authenticated using (true);\ncreate policy \"Members can add memories\" on public.memories for insert to authenticated with check (true);\ncreate policy \"Members can edit memories\" on public.memories for update to authenticated using (true) with check (true);\ncreate policy \"Members can delete memories\" on public.memories for delete to authenticated using (true);\ninsert into storage.buckets (id, name, public) values ('couple-memories', 'couple-memories', false) on conflict (id) do nothing;\ncreate policy \"Members can read couple photos\" on storage.objects for select to authenticated using (bucket_id = 'couple-memories');\ncreate policy \"Members can upload couple photos\" on storage.objects for insert to authenticated with check (bucket_id = 'couple-memories');\ncreate policy \"Members can update couple photos\" on storage.objects for update to authenticated using (bucket_id = 'couple-memories') with check (bucket_id = 'couple-memories');\ncreate policy \"Members can delete couple photos\" on storage.objects for delete to authenticated using (bucket_id = 'couple-memories');</pre><p class="admin-muted">This starter schema covers shared memory entries and private photo storage. It does not yet wire sign-in, uploads or dynamic rendering in this preview; those require the Supabase client integration and a deployed website. The policy is suitable only if you disable open sign-ups and restrict accounts to the two intended users.</p><a class="cta" href="https://supabase.com/dashboard/project/ixslwtshfbxhxsgdybvk" target="_blank" rel="noopener">Open your Supabase project ↗</a></div>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script>
+// Public client configuration only. A publishable key is safe for browser use when RLS is correctly configured.
+const SUPABASE_URL = 'https://ixslwtshfbxhxsgdybvk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_D8HgIejSZEJQDzZVgX0QcQ_Qt8JWSnu';
+const adminPanel = document.getElementById('adminPanel');
+const statusBox = document.getElementById('backendStatus');
+const gallery = document.getElementById('memoryGallery');
+const notice = document.getElementById('memoryNotice');
+const memoryRail = document.getElementById('memoryRail');
+let railAnimation = null;
+const editor = document.getElementById('memoryEditor');
+let supabaseClient = null, currentUser = null, currentRole = null, memoryCache = [];
+function setStatus(message,type) { statusBox.textContent=message; statusBox.className='admin-status'+(type?' '+type:''); }
+function safeText(value) { return String(value||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function clearMemoryForm() { ['memoryId','memoryTitle','memoryDate','memoryStory','memoryPhotos'].forEach(id=>document.getElementById(id).value=''); document.getElementById('memoryFormTitle').textContent='Add a memory'; }
+function setupMemoryRail() {
+  if(!memoryRail) return;
+  if(railAnimation){railAnimation.kill();railAnimation=null;}
+  if(window.ScrollTrigger) ScrollTrigger.getAll().filter(t=>t.vars&&t.vars.id==='memoryRailScroll').forEach(t=>t.kill());
+  if(!memoryCache.length){memoryRail.innerHTML='<div class="memory-rail-empty">Your first memory is waiting here ♡</div>';return;}
+  if(window.gsap && window.ScrollTrigger){gsap.registerPlugin(ScrollTrigger);}
+  const run=()=>{
+    if(!window.gsap || !window.ScrollTrigger) return;
+    const section=document.getElementById('memoryRailSection');
+    const distance=()=>Math.max(0,memoryRail.scrollWidth-window.innerWidth+48);
+    if(distance()>40){railAnimation=gsap.to(memoryRail,{x:()=>-distance(),ease:'none',scrollTrigger:{id:'memoryRailScroll',trigger:section,start:'top top+=70',end:()=>'+='+distance(),scrub:1,pin:true,anticipatePin:1,invalidateOnRefresh:true}});}
+    ScrollTrigger.refresh();
+  };
+  if(window.gsap && window.ScrollTrigger) run();
+  else {window.addEventListener('load',run,{once:true});}
+}
+
+async function renderStoryTimeline(items) {
+  const host=document.getElementById('timelineStops');
+  const traveler=document.getElementById('timelineTraveler');
+  const section=document.getElementById('storyTimeline');
+  if(!host||!section||!traveler)return;
+  const ordered=[...(items||[])].sort((a,b)=>String(a.memory_date||'').localeCompare(String(b.memory_date||'')));
+  if(!ordered.length){
+    host.innerHTML='<div class="timeline-empty">Add your first memory in Manage ♡ and watch it appear along our little path.</div>';
+    traveler.style.display='none';
+    section.style.minHeight='160px';
+    return;
+  }
+  traveler.style.display='grid';
+  section.style.minHeight=(ordered.length*205+50)+'px';
+  const rows=await Promise.all(ordered.map(async(item,index)=>{
+    let image='<div class="moment-photo-placeholder">♡</div>';
+    if(item.photo_paths&&item.photo_paths.length){
+      const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);
+      if(signed) image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy">';
+    }
+    const date=item.memory_date?new Date(item.memory_date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'A LITTLE MOMENT';
+    return '<article class="moment '+(index%2?'right':'left')+'"><div class="moment-card">'+image+'<h3>'+safeText(item.title)+'</h3><p>'+safeText(item.story||'A little moment we want to keep forever.')+'</p></div><div class="moment-pin"></div><div class="moment-date">'+safeText(date)+'</div></article>';
+  }));
+  host.innerHTML=rows.join('');
+  if(window.gsap&&window.ScrollTrigger){
+    gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.getAll().filter(t=>t.vars&&String(t.vars.id||'').startsWith('storyRoute')).forEach(t=>t.kill());
+    const stops=[...host.querySelectorAll('.moment')];
+    stops.forEach((stop,index)=>{
+      ScrollTrigger.create({id:'storyRouteStop'+index,trigger:stop,start:'top 78%',once:true,onEnter:()=>stop.classList.add('is-visible')});
+    });
+    gsap.fromTo(traveler,{top:'2%'},{top:'98%',ease:'none',scrollTrigger:{id:'storyRouteTraveler',trigger:section,start:'top 72%',end:'bottom 72%',scrub:1,invalidateOnRefresh:true}});
+    ScrollTrigger.refresh();
+  } else {
+    host.querySelectorAll('.moment').forEach(el=>el.classList.add('is-visible'));
+    traveler.style.top='50%';
+  }
+}
+
+async function loadMemories() {
+  const {data,error}=await supabaseClient.from('memories').select('*').order('memory_date',{ascending:false}).order('created_at',{ascending:false});
+  if(error){setStatus('Could not load memories: '+error.message,'error');return;}
+  memoryCache=data||[];
+  await renderStoryTimeline(memoryCache);
+  if(!memoryCache.length){gallery.innerHTML='<div class="photo"><div class="photo-art"><span>♡</span></div><div class="photo-caption">Your first memory is waiting</div><small>ADD A MEMORY IN YOUR PRIVATE STUDIO</small></div>';}
+  else {
+    const html=await Promise.all(memoryCache.map(async item=>{
+      let photo='';
+      if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)photo='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'">';}
+      const actions=currentRole==='admin'?'<div class="memory-card-actions"><button data-edit="'+item.id+'">Edit</button><button data-delete="'+item.id+'">Delete</button></div>':'';
+      return '<article class="memory-card">'+photo+'<div class="memory-card-body"><h3>'+safeText(item.title)+'</h3><time>'+safeText(item.memory_date||'')+'</time><p>'+safeText(item.story)+'</p>'+actions+'</div></article>';
+    }));
+    gallery.innerHTML=html.join('');
+    const railHtml=await Promise.all(memoryCache.map(async (item,index)=>{
+      let image='<div class="rail-placeholder">♡</div>';
+      if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy">';}
+      const tilt=[-2,1.5,-1,2][index%4];
+      return '<article class="rail-photo" style="--rail-tilt:'+tilt+'deg">'+image+'<div class="rail-photo-caption">'+safeText(item.title)+'</div><div class="rail-photo-date">'+safeText(item.memory_date||'A LITTLE MOMENT')+'</div></article>';
+    }));
+    memoryRail.innerHTML=railHtml.join('');
+    setupMemoryRail();
+  }
+  gallery.querySelectorAll('[data-edit]').forEach(button=>button.addEventListener('click',()=>{const item=memoryCache.find(row=>row.id===button.dataset.edit);if(!item)return;document.getElementById('memoryId').value=item.id;document.getElementById('memoryTitle').value=item.title;document.getElementById('memoryDate').value=item.memory_date||'';document.getElementById('memoryStory').value=item.story||'';document.getElementById('memoryFormTitle').textContent='Edit memory';editor.scrollIntoView({behavior:'smooth'});}));
+  gallery.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',async()=>{if(!confirm('Delete this memory and its photos?'))return;const item=memoryCache.find(row=>row.id===button.dataset.delete);if(item&&item.photo_paths&&item.photo_paths.length)await supabaseClient.storage.from('couple-memories').remove(item.photo_paths);const {error}=await supabaseClient.from('memories').delete().eq('id',button.dataset.delete);if(error)setStatus('Delete failed: '+error.message,'error');else{setStatus('Memory deleted.','success');await loadMemories();}}));
+  notice.innerHTML='<p>'+memoryCache.length+' shared memories · Signed in as '+safeText(currentUser.email)+' · '+(currentRole==='admin'?'Administrator':'View only')+'</p>';
+}
+async function syncSession(session) {
+  currentUser=session?session.user:null;currentRole=null;
+  document.getElementById('signInButton').classList.toggle('admin-hidden',!!currentUser);
+  document.getElementById('signOutButton').classList.toggle('admin-hidden',!currentUser);
+  editor.classList.add('admin-hidden');
+  if(!currentUser){setStatus('Sign in with one of the two invited accounts.');if(memoryRail)memoryRail.innerHTML='<div class="memory-rail-empty">Sign in to see your memories here ♡</div>';gallery.innerHTML='<div class="photo"><div class="photo-art"><span>☁</span></div><div class="photo-caption">Your private memories</div><small>SIGN IN TO VIEW</small></div>';notice.innerHTML='<p>Sign in through “Manage ♡” to view your private shared memories and photos.</p>';return;}
+  const {data,error}=await supabaseClient.from('couple_members').select('role').eq('user_id',currentUser.id).maybeSingle();
+  if(error||!data){await supabaseClient.auth.signOut();setStatus('This account is not on the couple access list. Check its UUID in Supabase.','error');return;}
+  currentRole=data.role;if(currentRole==='admin')editor.classList.remove('admin-hidden');
+  setStatus(currentRole==='admin'?'Administrator access enabled. You can manage memories.':'Viewer access enabled. You can browse but cannot change memories.','success');
+  await loadMemories();
+}
+async function startBackend(){
+  if(!window.supabase||!window.supabase.createClient){setStatus('Supabase client did not load. Check your internet connection.','error');return;}
+  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+  const {data:{session}}=await supabaseClient.auth.getSession();await syncSession(session);
+  supabaseClient.auth.onAuthStateChange((_event,sessionNow)=>setTimeout(()=>syncSession(sessionNow),0));
+}
+document.getElementById('signInButton').addEventListener('click',async()=>{const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;if(!email||!password){setStatus('Enter your email and password.','error');return;}const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)setStatus('Sign-in failed: '+error.message,'error');});
+document.getElementById('signOutButton').addEventListener('click',async()=>{await supabaseClient.auth.signOut();});
+document.getElementById('cancelEditButton').addEventListener('click',clearMemoryForm);
+document.getElementById('saveMemoryButton').addEventListener('click',async()=>{
+  if(currentRole!=='admin')return;
+  const title=document.getElementById('memoryTitle').value.trim();if(!title){setStatus('Please enter a memory title.','error');return;}
+  const id=document.getElementById('memoryId').value,old=memoryCache.find(item=>item.id===id),paths=old&&old.photo_paths?[...old.photo_paths]:[];
+  for(const file of Array.from(document.getElementById('memoryPhotos').files||[])){const name=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),path=currentUser.id+'/'+crypto.randomUUID()+'-'+name;const {error}=await supabaseClient.storage.from('couple-memories').upload(path,file,{contentType:file.type});if(error){setStatus('Photo upload failed: '+error.message,'error');return;}paths.push(path);}
+  const payload={title,memory_date:document.getElementById('memoryDate').value||null,story:document.getElementById('memoryStory').value,photo_paths:paths,updated_at:new Date().toISOString()};
+  const result=id?await supabaseClient.from('memories').update(payload).eq('id',id):await supabaseClient.from('memories').insert(payload);
+  if(result.error){setStatus('Could not save memory: '+result.error.message,'error');return;}clearMemoryForm();setStatus('Memory saved to your online database.','success');await loadMemories();
+});
+const supabaseScript=document.createElement('script');supabaseScript.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';supabaseScript.onload=startBackend;supabaseScript.onerror=()=>setStatus('Could not load the Supabase client library.','error');document.head.appendChild(supabaseScript);
+document.getElementById('openAdmin').addEventListener('click', () => { adminPanel.classList.add('open'); adminPanel.setAttribute('aria-hidden','false'); });
+document.getElementById('closeAdmin').addEventListener('click', () => { adminPanel.classList.remove('open'); adminPanel.setAttribute('aria-hidden','true'); });
+adminPanel.addEventListener('click', event => { if (event.target === adminPanel) { adminPanel.classList.remove('open'); adminPanel.setAttribute('aria-hidden','true'); } });
+</script>
+</body>
+</html>
