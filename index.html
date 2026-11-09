@@ -669,17 +669,17 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
       <div class="countdowns">
         <div class="countdown-card">
           <div class="cd-num" id="cdMeeting">—</div>
-          <div class="cd-label">下次见面</div>
+          <div class="cd-label" id="cdMeetingLabel">下次见面</div>
           <div class="cd-date" id="cdMeetingDate"></div>
         </div>
         <div class="countdown-card">
           <div class="cd-num" id="cdBirthday">—</div>
-          <div class="cd-label">她的生日</div>
+          <div class="cd-label" id="cdBirthdayLabel">她的生日</div>
           <div class="cd-date" id="cdBirthdayDate"></div>
         </div>
         <div class="countdown-card">
           <div class="cd-num" id="cdTrip">—</div>
-          <div class="cd-label">下一次旅行</div>
+          <div class="cd-label" id="cdTripLabel">下一次旅行</div>
           <div class="cd-date" id="cdTripDate"></div>
         </div>
       </div>
@@ -874,7 +874,7 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </div>
     <div class="admin-section" id="authSection"><h3>私密登录</h3><div class="admin-grid"><label class="admin-field">邮箱地址<input id="authEmail" type="email" placeholder="你的邮箱" autocomplete="username"></label><label class="admin-field">密码<input id="auth密码" type="password" placeholder="你的密码" autocomplete="current-password"></label></div><div class="admin-actions"><button class="admin-action" id="signInButton">登录</button><button class="admin-action admin-hidden" id="signOutButton">退出登录</button></div><p class="admin-muted">只有两个邀请账号可以进入。你的账号是管理员，女朋友的账号是只读。</p></div>
     <div class="admin-section"><h3>在一起的日子</h3><p class="admin-muted">你们在一起的日子。首页的天数会自动更新。</p><div class="admin-grid"><label class="admin-field">在一起自<input id="togetherSinceInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveStartDateButton" type="button">保存日期</button></div></div>
-    <div class="admin-section"><h3>倒计时日期</h3><p class="admin-muted">设置倒计时板块的三个日期。</p><div class="admin-grid"><label class="admin-field">下次见面<input id="meetingDateInput" type="date"></label><label class="admin-field">她的生日<input id="birthdayDateInput" type="date"></label><label class="admin-field">下一次旅行<input id="tripDateInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveCountdownButton" type="button">保存倒计时</button></div></div>
+    <div class="admin-section"><h3>倒计时日期和标签</h3><p class="admin-muted">设置倒计时板块的日期和标签文字。</p><div class="admin-grid"><label class="admin-field">标签1<input id="meetingLabelInput" placeholder="下次见面"></label><label class="admin-field">日期1<input id="meetingDateInput" type="date"></label><label class="admin-field">标签2<input id="birthdayLabelInput" placeholder="她的生日"></label><label class="admin-field">日期2<input id="birthdayDateInput" type="date"></label><label class="admin-field">标签3<input id="tripLabelInput" placeholder="下一次旅行"></label><label class="admin-field">日期3<input id="tripDateInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveCountdownButton" type="button">保存倒计时</button></div></div>
     <div id="adminBasics"></div>
     <div class="admin-group-label">日常碎片</div>
     <div id="adminScrap"></div>
@@ -1516,14 +1516,23 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
   const mInput = document.getElementById('meetingDateInput');
   const bInput = document.getElementById('birthdayDateInput');
   const tInput = document.getElementById('tripDateInput');
+  const mLInput = document.getElementById('meetingLabelInput');
+  const bLInput = document.getElementById('birthdayLabelInput');
+  const tLInput = document.getElementById('tripLabelInput');
   const btn = document.getElementById('saveCountdownButton');
   if(mInput) mInput.value = localStorage.getItem('littleSky.meetingDate') || '';
   if(bInput) bInput.value = localStorage.getItem('littleSky.birthdayDate') || '';
   if(tInput) tInput.value = localStorage.getItem('littleSky.tripDate') || '';
+  if(mLInput) mLInput.value = localStorage.getItem('littleSky.meetingLabel') || '';
+  if(bLInput) bLInput.value = localStorage.getItem('littleSky.birthdayLabel') || '';
+  if(tLInput) tLInput.value = localStorage.getItem('littleSky.tripLabel') || '';
   if(btn) btn.addEventListener('click', () => {
     if(mInput.value) localStorage.setItem('littleSky.meetingDate', mInput.value);
     if(bInput.value) localStorage.setItem('littleSky.birthdayDate', bInput.value);
     if(tInput.value) localStorage.setItem('littleSky.tripDate', tInput.value);
+    if(mLInput.value) localStorage.setItem('littleSky.meetingLabel', mLInput.value);
+    if(bLInput.value) localStorage.setItem('littleSky.birthdayLabel', bLInput.value);
+    if(tLInput.value) localStorage.setItem('littleSky.tripLabel', tLInput.value);
     btn.textContent = 'Saved ✓';
     setTimeout(()=>{ btn.textContent = '保存倒计时'; location.reload(); }, 800);
   });
@@ -2519,6 +2528,16 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
   const meetings = localStorage.getItem('littleSky.meetingDate') || '';
   const birthday = localStorage.getItem('littleSky.birthdayDate') || '';
   const trip = localStorage.getItem('littleSky.tripDate') || '';
+  // 加载自定义标签
+  const mLbl = localStorage.getItem('littleSky.meetingLabel') || '下次见面';
+  const bLbl = localStorage.getItem('littleSky.birthdayLabel') || '她的生日';
+  const tLbl = localStorage.getItem('littleSky.tripLabel') || '下一次旅行';
+  const mLEl = document.getElementById('cdMeetingLabel');
+  if(mLEl) mLEl.textContent = mLbl;
+  const bLEl = document.getElementById('cdBirthdayLabel');
+  if(bLEl) bLEl.textContent = bLbl;
+  const tLEl = document.getElementById('cdTripLabel');
+  if(tLEl) tLEl.textContent = tLbl;
   function daysTo(dateStr){
     if(!dateStr) return null;
     const target = new Date(dateStr+'T00:00:00');
