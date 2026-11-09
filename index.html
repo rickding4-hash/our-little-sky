@@ -142,6 +142,10 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
 .jnode-del { position:absolute; top:-8px; right:-8px; width:24px; height:24px; border-radius:50%; background:#C76B8F; color:#fff; border:none; font-size:14px; line-height:1; cursor:pointer; opacity:0; transition:opacity .2s; z-index:5; }
 .jnode:hover .jnode-del, .jnode-del:focus { opacity:1; }
 .jnode-del:hover { background:#A84A70; }
+.jnode-pet { position:absolute; bottom:-14px; left:-12px; opacity:0; transform:translateY(10px) scale(.5); transition:all .4s cubic-bezier(.34,1.56,.64,1) .3s; z-index:3; filter:drop-shadow(0 2px 4px rgba(0,0,0,.1)); }
+.jnode.in .jnode-pet { opacity:.9; transform:translateY(0) scale(1); }
+.jnode:nth-child(even) .jnode-pet { left:auto; right:-12px; }
+.jnode:nth-child(odd) .jnode-pet { left:-12px; }
 
 .journey-end { position:absolute; width:min(480px,80vw); text-align:center; z-index:2; opacity:0; transition:opacity .9s ease, transform 1s cubic-bezier(.16,.84,.3,1); }
 .journey-end.in { opacity:1; }
@@ -302,11 +306,7 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
 .scrap-item:nth-child(3n+1) { transform:rotate(-2.5deg); }
 .scrap-item:nth-child(3n+2) { transform:rotate(1.8deg); }
 .scrap-item:nth-child(3n+3) { transform:rotate(-1.2deg); }
-.scrap-item img { width:100%; border-radius:1px; display:block; }
-.scrap-item:nth-child(4n+1) img { aspect-ratio:4/5; }
-.scrap-item:nth-child(4n+2) img { aspect-ratio:1/1; }
-.scrap-item:nth-child(4n+3) img { aspect-ratio:3/4; }
-.scrap-item:nth-child(4n+4) img { aspect-ratio:4/5; }
+.scrap-item img { width:100%; height:auto; border-radius:1px; display:block; object-fit:cover; }
 .scrap-item .scrap-cap { font-family:var(--font-hand); font-size:16px; color:var(--deep); text-align:center; padding-top:12px; line-height:1.4; }
 .scrap-item .scrap-date { font-family:var(--font-body); font-size:9px; color:var(--muted); text-align:center; letter-spacing:.15em; text-transform:uppercase; padding-top:3px; }
 .scrap-item .scrap-del { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.95); color:var(--blush-deep); font-size:14px; line-height:22px; text-align:center; opacity:0; transition:opacity .2s; cursor:pointer; border:none; box-shadow:0 1px 4px rgba(0,0,0,.1); z-index:2; }
@@ -572,19 +572,18 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="navlinks">
       <button class="nav-menu-btn" id="navMenuBtn" type="button">目录 ♡</button>
       <div class="nav-dropdown" id="navDropdown">
-        <a href="#journey">时间线</a>
-        <a href="#memories">回忆</a>
-        <a href="#moments">日常碎片</a>
-        <a href="#countdowns">倒计时</a>
-        <a href="#bucketlist">愿望清单</a>
-        <a href="#calendar">纪念日历</a>
-        <a href="#mood">今日心情</a>
-        <a href="#places">去过的地方</a>
-        <a href="#universe">小宇宙</a>
-        <a href="#capsule">时光胶囊</a>
-        <a href="#letters">写给你的信</a>
-        <a href="#songs">我们的歌单</a>
-        <a href="#surprise">每日惊喜</a>
+        <a href="#journey">Timeline</a>
+        <a href="#moments">Everyday Fragments</a>
+        <a href="#countdowns">Countdown</a>
+        <a href="#bucketlist">Bucket List</a>
+        <a href="#calendar">Memory Calendar</a>
+        <a href="#mood">Daily Mood</a>
+        <a href="#places">Places We've Been</a>
+        <a href="#universe">Our Universe</a>
+        <a href="#capsule">Time Capsule</a>
+        <a href="#letters">Letters to You</a>
+        <a href="#surprise">Daily Surprise</a>
+        <a href="#letter">To You</a>
       </div>
       <button class="admin-link" id="openAdmin">管理 ♡</button>
     </div>
@@ -664,7 +663,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose">✕</button><img id="lightboxImg" alt=""></div>
 
     <!-- ===== 倒计时 ===== -->
-    <section class="section" id="countdowns">
+    <section class="section" id="countdowns" style="position:relative">
+      <div class="pet pet-cat" style="top:10px;left:3%;opacity:.45"><svg viewBox="0 0 60 50" width="38" height="32"><ellipse cx="30" cy="32" rx="20" ry="14" fill="#F5D5DE"/><path d="M14 24 L10 12 L22 20 Z" fill="#F5D5DE"/><path d="M46 24 L50 12 L38 20 Z" fill="#F5D5DE"/><circle cx="24" cy="30" r="2" fill="#456B89"/><circle cx="36" cy="30" r="2" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">Waiting for the day</div><h2>Countdown</h2><p>Every day worth waiting for is getting closer.</p></div>
       <div class="countdowns">
         <div class="countdown-card">
@@ -710,7 +710,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </section>
 
     <!-- ===== 专属纪念日历 ===== -->
-    <section class="section" id="calendar">
+    <section class="section" id="calendar" style="position:relative">
+      <div class="pet pet-turtle" style="top:5px;right:4%;opacity:.4"><svg viewBox="0 0 55 40" width="35" height="26"><ellipse cx="27" cy="22" rx="18" ry="12" fill="#A8D8F0"/><ellipse cx="27" cy="20" rx="14" ry="9" fill="#7FB8D9"/><circle cx="44" cy="20" r="6" fill="#A8D8F0"/><circle cx="46" cy="19" r="1.5" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">Our special days</div><h2>Memory Calendar</h2><p>Every special day deserves to be marked.</p></div>
       <div class="cal-next" id="calNext"></div>
       <div class="cal-wrap" style="margin-top:20px">
@@ -794,7 +795,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </div>
 
     <!-- ===== 时光胶囊 ===== -->
-    <section class="section" id="capsule">
+    <section class="section" id="capsule" style="position:relative">
+      <div class="pet pet-cat" style="bottom:10px;left:4%;opacity:.4"><svg viewBox="0 0 60 50" width="36" height="30"><ellipse cx="30" cy="32" rx="20" ry="14" fill="#F5D5DE"/><path d="M14 24 L10 12 L22 20 Z" fill="#F5D5DE"/><path d="M46 24 L50 12 L38 20 Z" fill="#F5D5DE"/><circle cx="24" cy="30" r="2" fill="#456B89"/><circle cx="36" cy="30" r="2" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">To us in the future</div><h2>Time Capsule</h2><p>Seal today's words, open them when that day comes.</p></div>
       <div class="capsule-grid" id="capsuleGrid">
         <div class="capsule-empty">还没有胶囊<br><br>去「管理 ♡」里封第一颗吧</div>
@@ -802,7 +804,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </section>
 
     <!-- ===== Letters to You ===== -->
-    <section class="section" id="letters">
+    <section class="section" id="letters" style="position:relative">
+      <div class="pet pet-turtle" style="top:15px;left:5%;opacity:.4"><svg viewBox="0 0 55 40" width="38" height="28"><ellipse cx="27" cy="22" rx="18" ry="12" fill="#A8D8F0"/><ellipse cx="27" cy="20" rx="14" ry="9" fill="#7FB8D9"/><circle cx="44" cy="20" r="6" fill="#A8D8F0"/><circle cx="46" cy="19" r="1.5" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">Words written for each other</div><h2>Letters to You</h2><p>Some things are better written slowly on paper.</p></div>
       <div class="letters-grid" id="lettersGrid">
         <div class="letters-empty">还没有信<br><br>去「管理 ♡」里写第一封吧</div>
@@ -816,14 +819,6 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
         <div class="lp-sign" id="lpSign"></div>
       </div>
     </div>
-
-    <!-- ===== 我们的歌 ===== -->
-    <section class="section" id="songs">
-      <div class="section-head"><div class="kicker">This song always makes me think of you</div><h2>Our Playlist</h2><p>Every song has a story about us.</p></div>
-      <div class="playlist" id="playlist">
-        <div class="song-empty">还没有歌<br><br>去「管理 ♡」里添加第一首吧</div>
-      </div>
-    </section>
 
     <!-- ===== 每日惊喜 ===== -->
     <section class="section" id="surprise" style="position:relative">
@@ -866,17 +861,16 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="admin-status" id="backendStatus">Loading secure connection…</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:16px 0;padding:12px;background:var(--sky-pale);border-radius:10px">
       <a href="#authSection" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">登录</a>
-      <a href="#adminBasics" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">基础设置</a>
+      <a href="#adminBasics" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">基础</a>
+      <a href="#adminTimeline" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">时间线</a>
       <a href="#adminScrap" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">碎片照片</a>
       <a href="#adminCal" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">日历</a>
       <a href="#adminPlaces" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">旅行</a>
       <a href="#adminStars" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">星空</a>
       <a href="#adminCapsule" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">胶囊</a>
-      <a href="#adminSurprise" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">惊喜</a>
       <a href="#adminLetters" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">信件</a>
+      <a href="#adminSurprise" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">惊喜</a>
       <a href="#adminContent" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">文字内容</a>
-      <a href="#adminTimeline" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">时间线</a>
-      <a href="#adminAlbum" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">相册</a>
     </div>
     <div class="admin-section" id="authSection"><h3>私密登录</h3><div class="admin-grid"><label class="admin-field">邮箱地址<input id="authEmail" type="email" placeholder="你的邮箱" autocomplete="username"></label><label class="admin-field">密码<input id="auth密码" type="password" placeholder="你的密码" autocomplete="current-password"></label></div><div class="admin-actions"><button class="admin-action" id="signInButton">登录</button><button class="admin-action admin-hidden" id="signOutButton">退出登录</button></div><p class="admin-muted">只有两个邀请账号可以进入。你的账号是管理员，女朋友的账号是只读。</p></div>
     <div class="admin-section"><h3>在一起的日子</h3><p class="admin-muted">你们在一起的日子。首页的天数会自动更新。</p><div class="admin-grid"><label class="admin-field">在一起自<input id="togetherSinceInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveStartDateButton" type="button">保存日期</button></div></div>
@@ -908,7 +902,6 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="admin-section"><h3>我们的小习惯</h3><p class="admin-muted">每行一条，共 4 条。</p><label class="admin-field"><textarea id="habitsInput" rows="5" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveHabitsButton" type="button">保存习惯</button></div></div>
     <div class="admin-section"><h3>愿望清单</h3><p class="admin-muted">每条愿望一行。完成后在页面上点圆圈标记已实现，可上传纪念照片。</p><label class="admin-field">愿望列表（每行一条）<textarea id="bucketInput" rows="6" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveBucketButton" type="button">保存清单</button></div></div>
     <div class="admin-section"><h3>每月一封信</h3><p class="admin-muted">每段一封，用 --- 分隔。</p><label class="admin-field"><textarea id="lettersInput" rows="8" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveLettersButton" type="button">保存信件</button></div></div>
-    <div class="admin-section"><h3>我们的歌单</h3><p class="admin-muted">添加一起听过的歌，支持封面和故事。</p><div class="admin-grid"><label class="admin-field">歌名<input id="songName" placeholder="如：小情歌"></label><label class="admin-field">歌手<input id="songArtist" placeholder="如：苏打绿"></label><label class="admin-field">封面<input id="songCover" type="file" accept="image/*"></label><label class="admin-field">故事<textarea id="songStory" rows="2" placeholder="这首歌对我们的意义..."></textarea></label></div><div class="admin-actions"><button class="admin-action" id="songAddButton" type="button">添加歌曲</button></div></div>
     <div class="admin-group-label">时间线</div>
     <div id="adminTimeline"></div>
     <div class="admin-section"><h3>我们的小相框</h3><p class="admin-muted">为路上的拍立得相框选一张照片。存在这台设备上，随时可以换。</p><div class="admin-grid"><label class="admin-field">他的相框<input id="frameHisInput" type="file" accept="image/*"></label><label class="admin-field">她的相框<input id="frameHerInput" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="frameHisPreview" alt="他的相框 preview"><img id="frameHerPreview" alt="她的相框 preview"></div><div class="admin-actions"><button class="admin-action" id="frameHisRemove" type="button">删除他的照片</button><button class="admin-action" id="frameHerRemove" type="button">删除她的照片</button></div></div>
@@ -1206,7 +1199,8 @@ initCounters();
                  + (i >= 12 ? '<button class="jnode-del" data-i="'+i+'" title="删除此节点">×</button>' : '')
                  + '<div class="cap" contenteditable="true" data-m="title" data-i="'+i+'">'+savedTitle+'</div>'
                  + '<div class="meta" contenteditable="true" data-m="date" data-i="'+i+'">'+saved日期+'</div>'
-                 + '<p contenteditable="true" data-m="text" data-i="'+i+'">'+savedText+'</p></div>';
+                 + '<p contenteditable="true" data-m="text" data-i="'+i+'">'+savedText+'</p>'
+                 + '<div class="jnode-pet">'+(i%2===0 ? '<svg viewBox="0 0 40 32" width="28" height="22"><ellipse cx="20" cy="20" rx="13" ry="9" fill="#F5D5DE"/><path d="M9 15 L6 8 L14 12 Z" fill="#F5D5DE"/><path d="M31 15 L34 8 L26 12 Z" fill="#F5D5DE"/><circle cx="16" cy="19" r="1.5" fill="#456B89"/><circle cx="24" cy="19" r="1.5" fill="#456B89"/></svg>' : '<svg viewBox="0 0 38 26" width="26" height="18"><ellipse cx="19" cy="15" rx="12" ry="8" fill="#A8D8F0"/><ellipse cx="19" cy="13" rx="9" ry="6" fill="#7FB8D9"/><circle cx="31" cy="13" r="4" fill="#A8D8F0"/><circle cx="32" cy="12" r="1" fill="#456B89"/></svg>')+'</div></div>';
     trackEl.appendChild(el);
     // 加载该节点保存的照片
     const savedPhoto = localStorage.getItem('littleSky.momentPhoto_'+i);
