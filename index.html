@@ -139,6 +139,9 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
 .jcard [contenteditable] { outline:none; border-radius:4px; transition:background .2s; }
 .jcard [contenteditable]:hover { background:rgba(226,236,243,.5); }
 .jcard [contenteditable]:focus { background:#fff; box-shadow:0 0 0 1px var(--sky); }
+.jnode-del { position:absolute; top:-8px; right:-8px; width:24px; height:24px; border-radius:50%; background:#C76B8F; color:#fff; border:none; font-size:14px; line-height:1; cursor:pointer; opacity:0; transition:opacity .2s; z-index:5; }
+.jnode:hover .jnode-del, .jnode-del:focus { opacity:1; }
+.jnode-del:hover { background:#A84A70; }
 
 .journey-end { position:absolute; width:min(480px,80vw); text-align:center; z-index:2; opacity:0; transition:opacity .9s ease, transform 1s cubic-bezier(.16,.84,.3,1); }
 .journey-end.in { opacity:1; }
@@ -1200,6 +1203,7 @@ initCounters();
     const saved日期  = localStorage.getItem('littleSky.moment日期_'+i)  || m.date;
     const savedText  = localStorage.getItem('littleSky.momentText_'+i)  || m.text;
     el.innerHTML = '<div class="jcard"><div class="art"><img alt="'+m.title+'"><span>'+m.glyph+'</span></div>'
+                 + (i >= 12 ? '<button class="jnode-del" data-i="'+i+'" title="删除此节点">×</button>' : '')
                  + '<div class="cap" contenteditable="true" data-m="title" data-i="'+i+'">'+savedTitle+'</div>'
                  + '<div class="meta" contenteditable="true" data-m="date" data-i="'+i+'">'+saved日期+'</div>'
                  + '<p contenteditable="true" data-m="text" data-i="'+i+'">'+savedText+'</p></div>';
@@ -1207,8 +1211,28 @@ initCounters();
     // 加载该节点保存的照片
     const savedPhoto = localStorage.getItem('littleSky.momentPhoto_'+i);
     if(savedPhoto){
+      const art = el.querySelector('.art');
       const img = el.querySelector('.art img');
-      if(img){ img.src = savedPhoto; img.style.display = 'block'; const span = el.querySelector('.art span'); if(span) span.style.display = 'none'; }
+      if(art && img){ img.src = savedPhoto; art.classList.add('has-photo'); }
+    }
+    // 自定义节点删除
+    const delBtn = el.querySelector('.jnode-del');
+    if(delBtn){
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if(!confirm('删除这个时间线节点？')) return;
+        const idx = parseInt(delBtn.getAttribute('data-i'), 10);
+        let extra = [];
+        try { extra = JSON.parse(localStorage.getItem('littleSky.extraMoments') || '[]'); } catch(e){}
+        extra.splice(idx - 12, 1);
+        localStorage.setItem('littleSky.extraMoments', JSON.stringify(extra));
+        // 清理照片
+        localStorage.removeItem('littleSky.momentPhoto_'+idx);
+        localStorage.removeItem('littleSky.momentTitle_'+idx);
+        localStorage.removeItem('littleSky.moment日期_'+idx);
+        localStorage.removeItem('littleSky.momentText_'+idx);
+        location.reload();
+      });
     }
     // Bind save on blur
     el.querySelectorAll('[contenteditable]').forEach(f=>{
@@ -1659,9 +1683,11 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
     if(dataUrl){ img.src = dataUrl; art.classList.add('has-photo'); }
     else { art.classList.remove('has-photo'); img.removeAttribute('src'); }
   }
-  for(let i=0;i<12;i++){
+  // 应用所有节点照片（包括新增节点）
+  const totalNodes = document.querySelectorAll('.jnode').length;
+  for(let i=0;i<totalNodes;i++){
     const saved = localStorage.getItem('littleSky.momentPhoto_'+i);
-    apply(i, saved);
+    if(saved) apply(i, saved);
     const prev = document.getElementById('moment'+i+'Preview');
     if(prev && saved){ prev.src = saved; prev.style.display='block'; }
     const input = document.getElementById('moment'+i+'Input');
@@ -1686,6 +1712,22 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
 
 /* ===== 添加新时间线节点 ===== */
 (function(){
+  function compress(file, cb){
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 800;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * scale));
+      c.height = Math.max(1, Math.round(img.height * scale));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      cb(c.toDataURL('image/jpeg', .85));
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
   const btn = document.getElementById('addMomentButton');
   if(!btn) return;
   btn.addEventListener('click', () => {
