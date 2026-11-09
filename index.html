@@ -1,57 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#b9ddf5">
+<meta name="theme-color" content="#F3F8FC">
 <meta name="robots" content="noindex,nofollow">
-<meta name="description" content="A little place for our forever.">
+<meta name="description" content="A little world that belongs to us.">
 <title>Our Little Sky</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23B9DDF5'/%3E%3Cpath d='M16 25s-7.2-4.4-7.2-9.3A4.1 4.1 0 0 1 16 12.6a4.1 4.1 0 0 1 7.2 3.1c0 4.9-7.2 9.3-7.2 9.3z' fill='%23183B59'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23A8D8F0'/%3E%3Cpath d='M16 25s-7.2-4.4-7.2-9.3A4.1 4.1 0 0 1 16 12.6a4.1 4.1 0 0 1 7.2 3.1c0 4.9-7.2 9.3-7.2 9.3z' fill='%23456B89'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link href="https://miaoda.feishu.cn/fonts/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<script src="https://fastly.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://fastly.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <style>
 :root {
-  --site-primary: #B9DDF5;
-  --site-secondary: #DCEEFF;
-  --site-background: #F5FAFF;
-  --site-on-primary: #6E4A70;
-  --site-on-secondary: #55455F;
-  --site-on-background: #55455F;
-  --site-font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
-  --site-font-heading: Georgia, 'Times New Roman', serif;
-  --ink: #294B68;
-  --muted: #5C7A95;
-  --line: #E1EFF9;
+  --bg: #F3F8FC;
+  --bg-warm: #FFFDF8;
+  --sky: #A8D8F0;
+  --sky-light: #DCEAF3;
+  --sky-pale: #EAF4FB;
+  --deep: #456B89;
+  --ink: #3A5A75;
+  --muted: #8497A8;
+  --line: #E2ECF3;
+  --blush: #F5D5DE;
+  --blush-deep: #C76B8F;
   --white: #FFFFFF;
-  --blue: #8CBDE4;
+  --shadow-soft: 0 4px 24px rgba(69,107,137,.08);
+  --shadow-card: 0 8px 32px rgba(69,107,137,.10);
+  --shadow-lift: 0 16px 48px rgba(69,107,137,.14);
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  --font-hand: 'Ma Shan Zheng', cursive;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; font-family: var(--site-font-body); color: var(--ink); background: #F5FAFF; }
+body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
 /* overflow:clip still clips the full-bleed bands, but does not create a scroll container, so position:sticky keeps working inside. */
-#app { min-height: 100vh; width: 100%; border-radius: 0; color: var(--ink); background-color: var(--site-background); overflow: clip; position: relative; }
+#app { min-height: 100vh; width: 100%; border-radius: 0; color: var(--ink); background-color: var(--bg); overflow: clip; position: relative; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; }
 .nav { display:flex; justify-content:space-between; align-items:center; padding: 20px clamp(18px,5vw,72px); position:absolute; top:0; left:0; right:0; z-index:5; }
-.brand { font-family:var(--site-font-heading); font-size:20px; letter-spacing:.04em; }
-.navlinks { display:flex; gap:clamp(12px,2.5vw,30px); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#547894; }
+.brand { font-family:var(--font-heading); font-size:20px; letter-spacing:.04em; }
+.navlinks { display:flex; gap:clamp(12px,2.5vw,30px); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#547894; align-items:center; position:relative; }
 .navlinks a:hover { color:#1D5B88; }
-.hero { min-height:720px; height:100svh; max-height:900px; display:grid; place-items:center; position:relative; text-align:center; padding:100px 20px 70px; background: radial-gradient(ellipse at 50% 25%,#FFFFFF 0%,#FBE4EF 45%,#CDE7F9 100%); isolation:isolate; }
-.hero:before,.hero:after { content:""; position:absolute; border-radius:50%; background:rgba(255,255,255,.58); filter:blur(1px); z-index:-1; }
-.hero:before { width:360px;height:110px;left:-70px;top:24%;box-shadow:90px -24px 0 -14px rgba(255,255,255,.62),150px 14px 0 -18px rgba(255,255,255,.48); }
-.hero:after { width:300px;height:90px;right:-80px;top:53%;box-shadow:-80px -20px 0 -12px rgba(255,255,255,.58),-140px 15px 0 -20px rgba(255,255,255,.48); }
-.sun { position:absolute; width:180px;height:180px;border-radius:50%; background:rgba(255,255,255,.52); top:17%; left:50%; transform:translateX(-50%); filter:blur(2px); z-index:-1; }
-.hero-content { max-width:760px; animation: rise 1.2s ease both; }
-.eyebrow { text-transform:uppercase; letter-spacing:.28em; font-size:11px; color:#7198B8; }
-h1 { font-family:var(--site-font-heading); font-size:clamp(56px,10vw,112px); font-weight:400; line-height:.98; letter-spacing:-.045em; margin:24px 0 20px; color:#315F83; }
-.hero p { font-family:var(--site-font-heading); font-style:italic; font-size:clamp(18px,2.5vw,24px); color:#6487A4; line-height:1.6; margin:0 auto 34px; }
-.cta { display:inline-flex; align-items:center; gap:12px; border:1px solid rgba(217,138,174,.4); border-radius:99px; padding:14px 22px; color:#8C5A82; background:rgba(255,255,255,.55); cursor:pointer; transition:.25s; }
-.cta:hover { background:#fff; transform:translateY(-3px); box-shadow:0 12px 30px rgba(226,150,185,.18); }
-.scrollhint { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); color:#7C9DB8; font-size:10px; letter-spacing:.22em; text-transform:uppercase; }
+.nav-menu-btn { border:1px solid #E8BFD2; border-radius:99px; padding:9px 16px; background:rgba(255,255,255,.72); color:#315F83; cursor:pointer; font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+.nav-menu-btn:hover { background:#fff; }
+.nav-dropdown { display:none; position:absolute; top:100%; right:0; margin-top:10px; background:#fff; border-radius:14px; box-shadow:0 12px 40px rgba(49,95,131,.15); padding:10px; min-width:160px; z-index:50; flex-direction:column; }
+.nav-dropdown.open { display:flex; }
+.nav-dropdown a { padding:10px 14px; border-radius:8px; text-transform:none; letter-spacing:.05em; font-size:13px; color:var(--deep); text-decoration:none; }
+.nav-dropdown a:hover { background:var(--sky-pale); color:var(--ink); }
+.hero { min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:120px 24px 80px; overflow:hidden; background: radial-gradient(ellipse at 50% 25%,#FFFFFF 0%,#FBE4EF 45%,#CDE7F9 100%); isolation:isolate; }
+/* 太阳光晕 */
+.sun-glow { position:absolute; top:8%; left:50%; transform:translateX(-50%); width:320px; height:320px; border-radius:50%; background:radial-gradient(circle,rgba(255,250,220,.8) 0%,rgba(255,250,220,.3) 40%,transparent 70%); z-index:0; animation:sunPulse 6s ease-in-out infinite; }
+@keyframes sunPulse { 0%,100%{opacity:.8;transform:translateX(-50%) scale(1)} 50%{opacity:1;transform:translateX(-50%) scale(1.05)} }
+/* 云朵 */
+.cloud { position:absolute; background:#fff; border-radius:100px; opacity:.85; z-index:0; filter:blur(.5px); }
+.cloud:before,.cloud:after { content:""; position:absolute; background:#fff; border-radius:50%; }
+.cloud-1 { width:120px; height:36px; top:15%; left:10%; animation:drift1 40s linear infinite; }
+.cloud-1:before { width:50px; height:50px; top:-25px; left:18px; }
+.cloud-1:after { width:35px; height:35px; top:-15px; right:20px; }
+.cloud-2 { width:90px; height:28px; top:25%; right:12%; animation:drift2 50s linear infinite; }
+.cloud-2:before { width:38px; height:38px; top:-18px; left:14px; }
+.cloud-2:after { width:28px; height:28px; top:-12px; right:16px; }
+.cloud-3 { width:150px; height:40px; top:55%; left:5%; animation:drift1 60s linear infinite reverse; opacity:.6; }
+.cloud-3:before { width:60px; height:60px; top:-30px; left:24px; }
+.cloud-3:after { width:40px; height:40px; top:-20px; right:24px; }
+.cloud-4 { width:100px; height:30px; top:65%; right:8%; animation:drift2 45s linear infinite reverse; opacity:.5; }
+.cloud-4:before { width:42px; height:42px; top:-20px; left:16px; }
+.cloud-4:after { width:30px; height:30px; top:-14px; right:18px; }
+@keyframes drift1 { 0%{transform:translateX(-200px)} 100%{transform:translateX(calc(100vw + 200px))} }
+@keyframes drift2 { 0%{transform:translateX(calc(100vw + 200px))} 100%{transform:translateX(-200px)} }
+
+.hero-content { position:relative; z-index:1; max-width:680px; }
+.eyebrow { text-transform:uppercase; letter-spacing:.32em; font-size:11px; color:var(--deep); opacity:.7; font-weight:500; }
+.hero h1 { font-family:var(--font-heading); font-size:clamp(64px,11vw,128px); font-weight:500; line-height:.95; letter-spacing:-.03em; margin:28px 0 20px; color:var(--deep); }
+.hero h1 .sky-word { font-style:italic; color:var(--blush-deep); }
+.hero-sub { font-family:var(--font-heading); font-style:italic; font-size:clamp(18px,2.4vw,22px); color:var(--muted); line-height:1.6; margin:0 auto 40px; }
+.enter-btn { display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(69,107,137,.25); border-radius:99px; padding:16px 32px; color:var(--deep); background:rgba(255,255,255,.6); backdrop-filter:blur(8px); font-size:13px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; transition:all .3s ease; text-decoration:none; }
+.enter-btn:hover { background:#fff; transform:translateY(-2px); box-shadow:0 12px 32px rgba(69,107,137,.15); border-color:rgba(69,107,137,.4); }
+.enter-btn .arrow { transition:transform .3s ease; }
+.enter-btn:hover .arrow { transform:translateY(3px); }
+.scrollhint { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:10px; letter-spacing:.24em; text-transform:uppercase; z-index:1; }
 
 /* days-together counter */
 .days-together { display:flex; align-items:center; justify-content:center; gap:clamp(18px,4vw,36px); margin-top:36px; animation: rise 1.2s ease .3s both; }
 .dt-item { display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; }
-.dt-num { font-family:var(--site-font-heading); font-size:clamp(26px,3.4vw,34px); line-height:1; color:#315F83; }
+.dt-num { font-family:var(--font-heading); font-size:clamp(26px,3.4vw,34px); line-height:1; color:#315F83; }
 .dt-label { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:#7198B8; }
 .dt-div { width:1px; height:40px; background:rgba(217,138,174,.3); }
 
@@ -59,10 +96,10 @@ main { max-width:1120px; margin:auto; padding:0 clamp(20px,5vw,64px) 100px; }
 .section { padding:100px 0 25px; }
 .section-head { text-align:center; margin-bottom:46px; }
 .kicker { color:#7198B8; text-transform:uppercase; letter-spacing:.24em; font-size:10px; }
-h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-weight:400; color:#315F83; margin:12px 0; }
+h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weight:400; color:#315F83; margin:12px 0; }
 .section-head p { color:var(--muted); font-size:14px; }
-.intro-card { max-width:760px; margin:0 auto; padding:clamp(28px,5vw,54px); background:rgba(255,255,255,.76); border:1px solid #E1EFF9; border-radius:24px; text-align:center; box-shadow:0 20px 60px rgba(91,145,185,.08); }
-.intro-card .bigquote { font-family:var(--site-font-heading); font-size:clamp(22px,3vw,30px); line-height:1.55; color:#527B9D; }
+.intro-card { max-width:760px; margin:0 auto; padding:clamp(28px,5vw,54px); background:rgba(255,255,255,.76); border:1px solid var(--line); border-radius:24px; text-align:center; box-shadow:0 20px 60px rgba(91,145,185,.08); }
+.intro-card .bigquote { font-family:var(--font-heading); font-size:clamp(22px,3vw,30px); line-height:1.55; color:#527B9D; }
 .intro-card p { color:#8B7892; line-height:1.9; font-size:14px; }
 /* ---------- Journey timeline: a couple walking a dashed trail ---------- */
 .journey { position:relative; width:100vw; margin-left:calc(-50vw + 50%); background:radial-gradient(ellipse at 50% 6%,#FFFFFF 0%,#EDF7FF 46%,#E2F0FC 100%); }
@@ -79,39 +116,39 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
 @keyframes drift { 0%{transform:translateY(24px) scale(.9);opacity:0} 16%{opacity:.55} 78%{opacity:.45} 100%{transform:translateY(-150px) scale(1.15);opacity:0} }
 @keyframes twinkle { 0%,100%{opacity:.12;transform:scale(.75)} 50%{opacity:.68;transform:scale(1)} }
 
-.jnode { position:absolute; width:min(280px,74vw); z-index:2; opacity:0; transform:scale(.72) rotate(0deg); transition:opacity .6s ease, transform .85s cubic-bezier(.16,.84,.3,1); }
-.jnode.in { opacity:1; transform:scale(1) rotate(var(--tilt,-3deg)); }
-.jcard { background:#fff; padding:9px 9px 0; border-radius:3px; box-shadow:0 22px 44px rgba(91,145,185,.12); }
-.jcard .art { aspect-ratio:1/1.05; display:grid; place-items:center; background:linear-gradient(150deg,#FBDCE6,#C9E4F8); color:#6F9DC1; font:44px var(--site-font-heading); position:relative; overflow:hidden; }
+.jnode { position:absolute; width:min(280px,74vw); z-index:2; opacity:0; transform:scale(.8) translateY(20px) rotate(0deg); }
+.jnode.in { opacity:1; transform:scale(1) translateY(0) rotate(var(--tilt,-3deg)); transition:opacity .5s ease, transform .7s cubic-bezier(.34,1.56,.64,1); }
+.jcard { background:#fff; padding:10px 10px 0; border-radius:4px; box-shadow:var(--shadow-lift); }
+.jcard .art { aspect-ratio:4/5; display:grid; place-items:center; background:linear-gradient(150deg,var(--sky-pale),var(--sky-light)); color:var(--deep); font:44px var(--font-heading); position:relative; overflow:hidden; border-radius:2px; }
 .jcard .art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; z-index:0; }
 .jcard .art.has-photo span { display:none; }
 .jcard .art.has-photo img { display:block; }
-.jcard .art:after { content:""; position:absolute; inset:0; background:linear-gradient(115deg,rgba(255,255,255,.62),rgba(255,255,255,0) 54%); }
-.jcard .art span { position:relative; z-index:1; opacity:.85; }
-.jcard .cap { font:italic 16px/1.35 var(--site-font-heading); color:#315F83; text-align:center; padding:15px 4px 5px; }
-.jcard .meta { font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#6F8DA8; text-align:center; padding-bottom:13px; }
-.jcard p { margin:0; padding:0 8px 15px; font-size:12.5px; line-height:1.7; color:#8B7892; text-align:center; }
+.jcard .art:after { content:""; position:absolute; inset:0; background:linear-gradient(115deg,rgba(255,255,255,.5),rgba(255,255,255,0) 50%); pointer-events:none; }
+.jcard .art span { position:relative; z-index:1; opacity:.8; }
+.jcard .cap { font:italic 17px/1.4 var(--font-heading); color:var(--deep); text-align:center; padding:16px 4px 6px; }
+.jcard .meta { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); text-align:center; padding-bottom:14px; }
+.jcard p { margin:0; padding:0 10px 18px; font-size:13px; line-height:1.8; color:var(--muted); text-align:center; }
 .jcard [contenteditable] { outline:none; border-radius:4px; transition:background .2s; }
-.jcard [contenteditable]:hover { background:rgba(225,241,253,.5); }
-.jcard [contenteditable]:focus { background:#fff; box-shadow:0 0 0 1px #B9D9F0; }
+.jcard [contenteditable]:hover { background:rgba(226,236,243,.5); }
+.jcard [contenteditable]:focus { background:#fff; box-shadow:0 0 0 1px var(--sky); }
 
 .journey-end { position:absolute; width:min(480px,80vw); text-align:center; z-index:2; opacity:0; transition:opacity .9s ease, transform 1s cubic-bezier(.16,.84,.3,1); }
 .journey-end.in { opacity:1; }
 .journey-end .end-heart { font-size:26px; color:#F0A9C4; line-height:1; }
-.journey-end h3 { font-family:var(--site-font-heading); font-weight:400; font-size:clamp(30px,4.6vw,46px); color:#315F83; margin:12px 0 14px; }
+.journey-end h3 { font-family:var(--font-heading); font-weight:400; font-size:clamp(30px,4.6vw,46px); color:#315F83; margin:12px 0 14px; }
 .journey-end p { color:#8B7892; font-size:13px; line-height:1.9; margin:0 auto; max-width:400px; }
 
 /* the two little walkers */
 /* the two little frames that walk the trail */
-.walker { position:absolute; left:0; top:0; width:132px; height:96px; z-index:3; transform-origin:50% 90%; will-change:transform; pointer-events:none; }
-.frames-row { display:flex; align-items:flex-end; gap:9px; justify-content:center; }
-.mini-frame { background:#fff; padding:5px 5px 4px; border-radius:3px; box-shadow:0 12px 24px rgba(60,105,145,.22); }
-.mini-frame-a { transform:rotate(-5deg); }
-.mini-frame-b { transform:rotate(4deg); }
-.mini-frame .frame-photo { width:52px; height:64px; border-radius:2px; background:linear-gradient(150deg,#FBDCE6,#C9E4F8); display:grid; place-items:center; overflow:hidden; position:relative; }
+.walker { position:absolute; left:0; top:0; width:180px; height:120px; z-index:3; transform-origin:50% 90%; will-change:transform; pointer-events:none; }
+.frames-row { display:flex; align-items:flex-end; gap:10px; justify-content:center; }
+.mini-frame { background:#fff; padding:8px 8px 12px; border-radius:4px; box-shadow:var(--shadow-lift); }
+.mini-frame .frame-photo { width:72px; height:90px; border-radius:2px; background:linear-gradient(145deg,var(--sky-pale),var(--sky-light)); display:grid; place-items:center; overflow:hidden; position:relative; }
 .mini-frame .frame-photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
 .mini-frame.has-photo .frame-photo img { display:block; }
 .mini-frame.has-photo .frame-empty { display:none; }
+.frame-empty { font-size:28px; color:var(--sky); line-height:1; }
+.frame-caption { text-align:center; padding-top:6px; font:italic 11px var(--font-heading); color:var(--muted); white-space:nowrap; letter-spacing:.05em; }
 .frame-empty { font-size:26px; color:#8FB8D8; line-height:1; }
 .frame-caption { font:italic 10px Georgia,serif; color:#8AA5BE; text-align:center; padding-top:3px; }
 .walker-shadow { position:absolute; left:50%; bottom:2px; width:70px; height:10px; margin-left:-35px; border-radius:50%; background:rgba(47,86,120,.16); transform-origin:50% 50%; animation:shadowPulse .55s -0.05s ease-in-out infinite alternate; }
@@ -141,47 +178,314 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
 .photo:hover { transform:rotate(0) translateY(-7px); }
 .photo-art { aspect-ratio:4/5; display:grid; place-items:center; background:linear-gradient(145deg,#FBDCE6,#C9E4F8); color:#6F9DC1; position:relative; overflow:hidden; }
 .photo-art:before { content:""; width:160px;height:65px;position:absolute;top:28%;left:-20px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:80px -22px 0 -10px rgba(255,255,255,.6),180px 14px 0 -12px rgba(255,255,255,.5); }
-.photo-art span { font-family:var(--site-font-heading); font-size:42px; opacity:.8; z-index:1; }
-.photo-caption { text-align:center; padding-top:14px; font-family:var(--site-font-heading); color:#527B9D; font-style:italic; font-size:15px; }
+.photo-art span { font-family:var(--font-heading); font-size:42px; opacity:.8; z-index:1; }
+.photo-caption { text-align:center; padding-top:14px; font-family:var(--font-heading); color:#527B9D; font-style:italic; font-size:15px; }
 .photo small { display:block; text-align:center; color:#6F8DA8; margin-top:6px; font-size:10px; letter-spacing:.08em; }
 .adventures { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
 .adventure { min-height:220px; border-radius:22px; padding:28px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(145deg,#FBDCE6,#F2BCD2); color:#8A4E6B; position:relative; overflow:hidden; }
 .adventure:nth-child(2) { background:linear-gradient(145deg,#E4F2FD,#BBDDF3); }
 .adventure:before { content:"✧"; position:absolute; top:15px;right:25px; font-size:60px; color:rgba(255,255,255,.7); }
-.adventure h3 { font-family:var(--site-font-heading); font-weight:400; font-size:27px; margin:0 0 7px; }
+.adventure h3 { font-family:var(--font-heading); font-weight:400; font-size:27px; margin:0 0 7px; }
 .adventure p { margin:0; font-size:13px; color:#8B7892; }
 .letter { max-width:760px; margin:auto; padding:clamp(28px,6vw,60px); background:#fff; border:1px solid #E2EFF8; border-radius:4px; box-shadow:0 16px 50px rgba(91,145,185,.10); position:relative; }
 .letter:before { content:"♡"; position:absolute; top:18px;right:25px; font-size:28px; color:#F0B3C8; }
-.letter h3 { font-family:var(--site-font-heading); font-size:30px; font-weight:400; color:#315F83; margin:0 0 24px; }
+.letter h3 { font-family:var(--font-heading); font-size:30px; font-weight:400; color:#315F83; margin:0 0 24px; }
 .letter p { color:#8B7892; line-height:2; font-size:14px; }
-.letter .sign { font-family:var(--site-font-heading); font-style:italic; font-size:22px; color:#8E5A8C; margin-top:30px; }
+.letter .sign { font-family:var(--font-heading); font-style:italic; font-size:22px; color:#8E5A8C; margin-top:30px; }
+
+/* ===== 倒计时板块 ===== */
+.countdowns { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.countdown-card { background:#fff; border-radius:18px; padding:24px 20px; text-align:center; box-shadow:0 8px 24px rgba(60,105,145,.08); border-top:3px solid #C9E4F8; }
+.countdown-card:nth-child(2) { border-top-color:#FBDCE6; }
+.countdown-card:nth-child(3) { border-top-color:#D6E8D5; }
+.countdown-card .cd-num { font-family:var(--font-heading); font-size:42px; color:#315F83; line-height:1; margin-bottom:6px; }
+.countdown-card:nth-child(2) .cd-num { color:#C76B8F; }
+.countdown-card .cd-label { font-size:13px; color:#8B7892; }
+.countdown-card .cd-date { font-size:11px; color:#B0A0B8; margin-top:6px; }
+
+/* ===== 小习惯板块 ===== */
+.habits { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.habit-card { background:#fff; border-radius:16px; padding:20px 16px; text-align:center; box-shadow:0 6px 18px rgba(60,105,145,.07); }
+.habit-card .habit-icon { font-size:28px; margin-bottom:8px; }
+.habit-card .habit-text { font-size:13px; color:#5A7A96; line-height:1.6; }
+.habit-card .habit-tag { font-size:10px; color:#B0A0B8; margin-top:8px; font-style:italic; }
+
+/* ===== 愿望清单（升级版） ===== */
+.bucket-progress { max-width:560px; margin:0 auto 32px; text-align:center; }
+.bucket-progress-bar { height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:10px; }
+.bucket-progress-fill { height:100%; background:linear-gradient(90deg,var(--sky),var(--blush-deep)); border-radius:99px; transition:width .6s ease; }
+.bucket-progress-text { font-size:13px; color:var(--muted); }
+.bucket-progress-text strong { color:var(--deep); font-size:18px; font-family:var(--font-heading); }
+.bucket-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; max-width:900px; margin:0 auto; }
+.bucket-card { background:#fff; border-radius:12px; padding:20px; box-shadow:var(--shadow-soft); position:relative; transition:transform .3s ease, box-shadow .3s ease; }
+.bucket-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-card); }
+.bucket-card.done { background:linear-gradient(135deg,#fff,#FDF5F7); border:1px solid var(--blush); }
+.bucket-card .bc-check { position:absolute; top:16px; right:16px; width:22px; height:22px; border-radius:50%; border:2px solid var(--line); cursor:pointer; display:grid; place-items:center; font-size:13px; color:transparent; transition:all .2s; background:#fff; }
+.bucket-card.done .bc-check { background:var(--blush-deep); border-color:var(--blush-deep); color:#fff; }
+.bucket-card .bc-title { font-family:var(--font-heading); font-size:17px; color:var(--deep); margin-bottom:6px; padding-right:30px; }
+.bucket-card.done .bc-title { text-decoration:line-through; opacity:.7; }
+.bucket-card .bc-date { font-size:11px; color:var(--muted); letter-spacing:.05em; }
+.bucket-card .bc-photo { margin-top:12px; aspect-ratio:4/3; border-radius:8px; overflow:hidden; background:var(--sky-pale); display:none; }
+.bucket-card .bc-photo.has { display:block; }
+.bucket-card .bc-photo img { width:100%; height:100%; object-fit:cover; }
+.bucket-card .bc-tag { display:inline-block; margin-top:10px; font-size:10px; padding:3px 10px; border-radius:99px; background:var(--sky-pale); color:var(--deep); letter-spacing:.08em; text-transform:uppercase; }
+.bucket-card.done .bc-tag { background:var(--blush); color:var(--blush-deep); }
+.bucket-card .bc-del { position:absolute; bottom:16px; right:16px; width:20px; height:20px; border-radius:50%; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; opacity:0; transition:opacity .2s; }
+.bucket-card:hover .bc-del { opacity:.6; }
+.bucket-empty { text-align:center; padding:60px 20px; color:var(--muted); }
+
+/* ===== 每月一封信 ===== */
+.monthly-letters { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.monthly-letter { background:#FFF9FC; border:1px solid #F0DCE8; border-radius:14px; padding:18px; cursor:pointer; transition:box-shadow .2s; }
+.monthly-letter:hover { box-shadow:0 6px 20px rgba(199,107,143,.12); }
+.monthly-letter .ml-month { font-family:var(--font-heading); font-size:16px; color:#C76B8F; margin-bottom:6px; }
+.monthly-letter .ml-preview { font-size:12px; color:#8B7892; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.monthly-letter .ml-full { display:none; margin-top:10px; padding-top:10px; border-top:1px solid #F0DCE8; font-size:13px; color:#5A7A96; line-height:1.8; }
+.monthly-letter.open .ml-full { display:block; }
+.monthly-letter.open .ml-preview { display:none; }
+
+/* ===== 我们的歌 ===== */
+.songs { display:grid; gap:12px; max-width:560px; margin:0 auto; }
+/* ===== 我们的歌单 ===== */
+.playlist { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; max-width:900px; margin:0 auto; }
+.song-card { background:#fff; border-radius:14px; padding:16px; box-shadow:var(--shadow-soft); transition:transform .3s; }
+.song-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-card); }
+.song-cover { width:100%; aspect-ratio:1; border-radius:10px; background:linear-gradient(135deg,var(--sky-pale),var(--blush)); display:grid; place-items:center; font-size:40px; color:var(--deep); margin-bottom:14px; position:relative; overflow:hidden; }
+.song-cover img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.song-cover .play-btn { position:absolute; bottom:10px; right:10px; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.9); display:grid; place-items:center; cursor:pointer; font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,.15); transition:transform .2s; }
+.song-cover .play-btn:hover { transform:scale(1.1); }
+.song-title { font-family:var(--font-heading); font-size:17px; color:var(--deep); margin:0 0 2px; }
+.song-artist { font-size:12px; color:var(--muted); margin-bottom:8px; }
+.song-note { font-size:12px; color:var(--ink); line-height:1.6; font-style:italic; }
+.song-del { position:absolute; top:10px; right:10px; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.9); border:none; color:var(--muted); font-size:14px; cursor:pointer; opacity:0; transition:opacity .2s; z-index:2; }
+.song-card:hover .song-del { opacity:1; }
+.song-card { position:relative; }
+.song-empty { grid-column:1/-1; text-align:center; padding:60px; color:var(--muted); }
+
+/* ===== 每日惊喜 ===== */
+#surprise { background: linear-gradient(180deg, var(--bg) 0%, var(--blush) 100%); }
+.surprise-card { max-width:380px; margin:0 auto; perspective:1000px; cursor:pointer; }
+.surprise-inner { position:relative; width:100%; padding-top:140%; transition:transform .8s cubic-bezier(.4,0,.2,1); transform-style:preserve-3d; }
+.surprise-card.open .surprise-inner { transform:rotateY(180deg); }
+.surprise-front, .surprise-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; text-align:center; }
+.surprise-front { background:linear-gradient(135deg, var(--sky), var(--blush)); color:#fff; box-shadow:var(--shadow-card); }
+.surprise-front .sf-icon { font-size:48px; margin-bottom:16px; }
+.surprise-front h3 { font-family:var(--font-heading); font-size:24px; margin:0 0 8px; }
+.surprise-front p { font-size:13px; opacity:.9; margin:0; }
+.surprise-back { background:#fff; transform:rotateY(180deg); box-shadow:var(--shadow-lift); }
+.surprise-back .sb-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.surprise-back .sb-content { font-family:var(--font-heading); font-size:18px; color:var(--deep); line-height:1.6; }
+.surprise-back img { width:100%; border-radius:8px; margin-top:12px; }
+.surprise-back .sb-date { margin-top:16px; font-size:11px; color:var(--muted); }
+
+/* ===== P3: 日常碎片照片墙（手账风） ===== */
+#moments { background: linear-gradient(180deg, var(--bg) 0%, #FBF7F2 50%, var(--bg) 100%); position:relative; }
+#moments:before { content:""; position:absolute; inset:0; opacity:.04; background-image:radial-gradient(circle,#456B89 1px,transparent 1px); background-size:24px 24px; pointer-events:none; }
+.scrapbook { columns:3; column-gap:24px; max-width:920px; margin:0 auto; position:relative; }
+.scrap-item { display:inline-block; width:100%; margin-bottom:28px; background:#FFFEFA; padding:12px 12px 16px; border-radius:2px; box-shadow:0 3px 12px rgba(69,107,137,.12), 0 1px 3px rgba(69,107,137,.08); break-inside:avoid; cursor:pointer; transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s; position:relative; }
+.scrap-item:hover { transform:scale(1.04) rotate(0deg) !important; box-shadow:0 16px 40px rgba(69,107,137,.18); z-index:5; }
+/* 和纸胶带 */
+.scrap-item:before { content:""; position:absolute; top:-8px; left:50%; transform:translateX(-50%) rotate(-2deg); width:60px; height:20px; background:rgba(245,213,222,.7); background-image:linear-gradient(45deg,rgba(255,255,255,.3) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.3) 50%,rgba(255,255,255,.3) 75%,transparent 75%); background-size:8px 8px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+.scrap-item:nth-child(3n+2):before { background:rgba(168,216,240,.7); transform:translateX(-50%) rotate(3deg); }
+.scrap-item:nth-child(3n+3):before { background:rgba(245,222,179,.6); transform:translateX(-50%) rotate(-4deg); }
+.scrap-item:nth-child(3n+1) { transform:rotate(-2.5deg); }
+.scrap-item:nth-child(3n+2) { transform:rotate(1.8deg); }
+.scrap-item:nth-child(3n+3) { transform:rotate(-1.2deg); }
+.scrap-item img { width:100%; border-radius:1px; display:block; }
+.scrap-item:nth-child(4n+1) img { aspect-ratio:4/5; }
+.scrap-item:nth-child(4n+2) img { aspect-ratio:1/1; }
+.scrap-item:nth-child(4n+3) img { aspect-ratio:3/4; }
+.scrap-item:nth-child(4n+4) img { aspect-ratio:4/5; }
+.scrap-item .scrap-cap { font-family:var(--font-hand); font-size:16px; color:var(--deep); text-align:center; padding-top:12px; line-height:1.4; }
+.scrap-item .scrap-date { font-family:var(--font-body); font-size:9px; color:var(--muted); text-align:center; letter-spacing:.15em; text-transform:uppercase; padding-top:3px; }
+.scrap-item .scrap-del { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.95); color:var(--blush-deep); font-size:14px; line-height:22px; text-align:center; opacity:0; transition:opacity .2s; cursor:pointer; border:none; box-shadow:0 1px 4px rgba(0,0,0,.1); z-index:2; }
+.scrap-item:hover .scrap-del { opacity:1; }
+.scrap-empty { text-align:center; padding:80px 20px; color:var(--muted); font-size:15px; font-family:var(--font-hand); font-size:20px; }
+/* 灯箱 */
+.lightbox { display:none; position:fixed; inset:0; z-index:30; background:rgba(30,50,70,.88); align-items:center; justify-content:center; padding:20px; }
+.lightbox.open { display:flex; }
+.lightbox img { max-width:90vw; max-height:85vh; border-radius:4px; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+.lightbox-close { position:absolute; top:20px; right:24px; color:#fff; font-size:28px; cursor:pointer; background:none; border:none; }
+
+/* ===== Letters to You ===== */
+#letters { background: linear-gradient(180deg, #F3F8FC 0%, #E8F0F8 100%); }
+.letters-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:28px; max-width:960px; margin:0 auto; }
+.envelope { position:relative; aspect-ratio:1.6/1; background:linear-gradient(135deg,#A8D8F0,#8CC0E8); border-radius:6px; cursor:pointer; transition:transform .3s ease, box-shadow .3s ease; box-shadow:0 4px 16px rgba(69,107,137,.15); }
+.envelope:hover { transform:translateY(-6px) rotate(-1deg); box-shadow:0 12px 32px rgba(69,107,137,.22); }
+.envelope:before { content:""; position:absolute; top:0; left:0; right:0; height:50%; background:linear-gradient(135deg,#9BCDEA,#7FB8E0); clip-path:polygon(0 0, 50% 70%, 100% 0); border-radius:6px 6px 0 0; }
+.envelope .env-label { position:absolute; bottom:12px; left:16px; right:16px; color:#fff; font-size:12px; letter-spacing:.08em; opacity:.9; }
+.envelope .env-from { position:absolute; top:14px; right:16px; color:rgba(255,255,255,.8); font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+.envelope.locked { background:linear-gradient(135deg,#C8D8E5,#B0C4D6); }
+.envelope.locked:before { background:linear-gradient(135deg,#B8CCDD,#A0B8CC); }
+.envelope.locked .env-label { color:rgba(255,255,255,.7); }
+.envelope .env-lock { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:20px; color:rgba(255,255,255,.6); }
+/* 信纸弹窗 */
+.letter-modal { display:none; position:fixed; inset:0; z-index:31; background:rgba(30,50,70,.85); align-items:center; justify-content:center; padding:20px; }
+.letter-modal.open { display:flex; }
+.letter-paper { background:#FFFEF5; max-width:600px; width:100%; max-height:85vh; overflow-y:auto; padding:48px 44px; border-radius:4px; box-shadow:0 24px 60px rgba(0,0,0,.3); position:relative; font-family:var(--font-hand); font-size:17px; line-height:2; color:var(--ink); }
+.letter-paper:before { content:""; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--sky),var(--blush)); border-radius:4px 4px 0 0; }
+.letter-paper .lp-date { font-family:var(--font-body); font-size:11px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:20px; }
+.letter-paper .lp-body { white-space:pre-wrap; }
+.letter-paper .lp-sign { margin-top:32px; text-align:right; font-size:18px; color:var(--deep); }
+.letter-close { position:absolute; top:16px; right:18px; background:none; border:none; font-size:24px; color:var(--muted); cursor:pointer; }
+.letters-empty { text-align:center; padding:80px 20px; color:var(--muted); font-size:15px; }
+
+/* ===== 专属纪念日历 ===== */
+#calendar { background: linear-gradient(180deg, var(--bg) 0%, var(--sky-pale) 100%); }
+.cal-wrap { max-width:680px; margin:0 auto; background:#fff; border-radius:16px; box-shadow:var(--shadow-card); padding:32px; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.cal-title { font-family:var(--font-heading); font-size:22px; color:var(--deep); }
+.cal-nav { display:flex; gap:8px; }
+.cal-nav button { width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--deep); cursor:pointer; font-size:14px; transition:all .2s; }
+.cal-nav button:hover { background:var(--sky-pale); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-dow { text-align:center; font-size:11px; color:var(--muted); padding:8px 0; letter-spacing:.08em; text-transform:uppercase; }
+.cal-day { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:8px; font-size:14px; color:var(--ink); cursor:pointer; position:relative; transition:background .2s; }
+.cal-day:hover { background:var(--sky-pale); }
+.cal-day.other { opacity:.3; }
+.cal-day.today { background:var(--sky); color:#fff; font-weight:600; }
+.cal-day.special { background:var(--blush); color:var(--blush-deep); font-weight:500; }
+.cal-dot { position:absolute; bottom:4px; width:5px; height:5px; border-radius:50%; background:var(--blush-deep); }
+.cal-day.today .cal-dot { background:#fff; }
+.cal-legend { display:flex; flex-wrap:wrap; gap:16px; margin-top:24px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+.cal-legend span { display:flex; align-items:center; gap:6px; }
+.cal-legend .dot { width:10px; height:10px; border-radius:50%; }
+.cal-next { max-width:680px; margin:24px auto 0; text-align:center; font-size:14px; color:var(--muted); }
+.cal-next strong { color:var(--blush-deep); font-family:var(--font-heading); font-size:18px; }
+/* 日期弹窗 */
+.cal-modal { display:none; position:fixed; inset:0; z-index:31; background:rgba(30,50,70,.85); align-items:center; justify-content:center; padding:20px; }
+.cal-modal.open { display:flex; }
+.cal-modal-card { background:#fff; max-width:400px; width:100%; padding:28px; border-radius:12px; }
+.cal-modal-card h3 { margin:0 0 12px; font-family:var(--font-heading); color:var(--deep); font-size:18px; }
+.cal-modal-card p { margin:0 0 16px; font-size:13px; color:var(--muted); line-height:1.6; }
+.cal-modal-card textarea { width:100%; min-height:80px; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:13px; resize:vertical; font-family:var(--font-body); }
+.cal-modal-card .actions { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+.cal-modal-card button { padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-size:13px; }
+.cal-modal-card .save { background:var(--deep); color:#fff; }
+.cal-modal-card .close { background:var(--line); color:var(--ink); }
+
+/* ===== 今日心情 ===== */
+#mood { background: linear-gradient(180deg, var(--bg) 0%, #F0F4FA 100%); }
+.mood-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:700px; margin:0 auto; }
+@media(max-width:600px){ .mood-row { grid-template-columns:1fr; } }
+.mood-card { background:#fff; border-radius:16px; padding:24px; box-shadow:var(--shadow-soft); text-align:center; }
+.mood-card h3 { margin:0 0 4px; font-family:var(--font-heading); font-size:18px; color:var(--deep); }
+.mood-card .mood-date { font-size:11px; color:var(--muted); margin-bottom:20px; letter-spacing:.08em; }
+.mood-options { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.mood-opt { aspect-ratio:1; border-radius:12px; border:2px solid var(--line); background:var(--bg); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:20px; transition:all .2s; }
+.mood-opt:hover { border-color:var(--sky); transform:translateY(-2px); }
+.mood-opt.selected { border-color:var(--blush-deep); background:var(--blush); transform:scale(1.05); }
+.mood-opt .mood-label { font-size:9px; color:var(--muted); letter-spacing:.05em; }
+.mood-card textarea { width:100%; min-height:50px; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:13px; resize:vertical; font-family:var(--font-body); margin-bottom:12px; }
+.mood-card .mood-photo-slot { width:100%; aspect-ratio:4/3; border-radius:8px; background:var(--sky-pale); display:grid; place-items:center; cursor:pointer; overflow:hidden; color:var(--muted); font-size:12px; margin-bottom:12px; }
+.mood-card .mood-photo-slot img { width:100%; height:100%; object-fit:cover; }
+.mood-save { width:100%; padding:10px; border:none; border-radius:8px; background:var(--deep); color:#fff; font-size:13px; cursor:pointer; }
+.mood-save:hover { opacity:.9; }
+/* 历史 */
+.mood-history { max-width:700px; margin:40px auto 0; }
+.mood-history h3 { font-family:var(--font-heading); font-size:16px; color:var(--deep); margin-bottom:16px; text-align:center; }
+.mood-history-list { display:flex; flex-direction:column; gap:10px; }
+.mood-h-item { display:flex; align-items:center; gap:12px; background:#fff; padding:12px 16px; border-radius:10px; box-shadow:var(--shadow-soft); font-size:13px; }
+.mood-h-item .h-emoji { font-size:22px; }
+.mood-h-item .h-date { color:var(--muted); font-size:11px; min-width:80px; }
+.mood-h-item .h-text { color:var(--ink); flex:1; }
+.mood-h-item .h-photo { width:40px; height:40px; border-radius:6px; object-fit:cover; }
+
+/* ===== 我们去过的地方 ===== */
+#places { background: linear-gradient(180deg, var(--bg) 0%, var(--sky-pale) 100%); }
+.map-wrap { max-width:900px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:var(--shadow-card); }
+#travelMap { height:420px; width:100%; background:var(--sky-light); }
+.places-list { max-width:900px; margin:24px auto 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.place-card { background:#fff; border-radius:12px; padding:16px; box-shadow:var(--shadow-soft); }
+.place-card .pc-photo { width:100%; aspect-ratio:4/3; border-radius:8px; object-fit:cover; margin-bottom:12px; }
+.place-card h4 { margin:0 0 4px; font-family:var(--font-heading); font-size:16px; color:var(--deep); }
+.place-card .pc-date { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.place-card .pc-story { font-size:12px; color:var(--ink); line-height:1.6; }
+.place-card .pc-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; float:right; }
+/* Leaflet popup 样式 */
+.leaflet-popup-content-wrapper { border-radius:12px; padding:4px; }
+.leaflet-popup-content { margin:12px; font-family:var(--font-body); }
+.leaflet-popup-content h4 { margin:0 0 4px; font-family:var(--font-heading); color:var(--deep); }
+.leaflet-popup-content p { margin:4px 0; font-size:12px; color:var(--muted); }
+
+/* ===== 我们的小宇宙 ===== */
+#universe { background: radial-gradient(ellipse at 50% 0%, #1a2a4a 0%, #0d1b3a 50%, #060d24 100%); min-height:600px; position:relative; overflow:hidden; }
+#universe .section-head h2, #universe .section-head p, #universe .section-head .kicker { color:#fff; }
+#universe .section-head .kicker { opacity:.6; }
+.starfield { position:absolute; inset:0; pointer-events:none; }
+.star-dot { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; animation:twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%,100%{opacity:.2;transform:scale(.8)} 50%{opacity:.9;transform:scale(1.2)} }
+.moon { position:absolute; top:60px; right:80px; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #f5f0e0, #d4c8a8); box-shadow:0 0 40px rgba(245,240,224,.4); cursor:pointer; transition:transform .3s; }
+.moon:hover { transform:scale(1.1); }
+.moon-crater { position:absolute; border-radius:50%; background:rgba(0,0,0,.08); }
+.universe-stars { position:absolute; inset:0; }
+.ustar { position:absolute; width:14px; height:14px; cursor:pointer; z-index:2; }
+.ustar:before { content:"✦"; position:absolute; inset:0; color:#fff; font-size:18px; text-shadow:0 0 10px rgba(255,255,255,.8); animation:starPulse 2.5s ease-in-out infinite; }
+@keyframes starPulse { 0%,100%{opacity:.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.2)} }
+.ustar:hover:before { color:var(--blush); text-shadow:0 0 16px var(--blush); }
+.ustar .ustar-label { position:absolute; top:20px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:10px; color:rgba(255,255,255,.6); opacity:0; transition:opacity .2s; }
+.ustar:hover .ustar-label { opacity:1; }
+/* 星星弹窗 */
+.universe-modal { display:none; position:fixed; inset:0; z-index:31; background:rgba(6,13,36,.9); align-items:center; justify-content:center; padding:20px; }
+.universe-modal.open { display:flex; }
+.universe-card { background:linear-gradient(180deg, #1a2a4a, #0d1b3a); max-width:440px; width:100%; padding:36px; border-radius:16px; border:1px solid rgba(168,216,240,.2); color:#fff; }
+.universe-card h3 { margin:0 0 8px; font-family:var(--font-heading); font-size:22px; color:var(--sky); }
+.universe-card .uc-date { font-size:11px; color:rgba(255,255,255,.5); letter-spacing:.1em; margin-bottom:16px; }
+.universe-card p { font-size:14px; line-height:1.8; color:rgba(255,255,255,.8); }
+.universe-card .close { position:absolute; top:16px; right:18px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer; }
+.universe-card { position:relative; }
+@media(max-width:680px){ .moon { right:30px; top:40px; width:44px; height:44px; } }
+
+/* ===== 时光胶囊 ===== */
+#capsule { background: linear-gradient(180deg, var(--bg) 0%, #F0EDE5 100%); }
+.capsule-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:24px; max-width:800px; margin:0 auto; }
+.capsule-card { background:#fff; border-radius:16px; padding:28px; box-shadow:var(--shadow-card); text-align:center; position:relative; overflow:hidden; }
+.capsule-card.locked { background:linear-gradient(135deg, #E8E4DC, #D8D4CC); color:var(--muted); }
+.capsule-icon { font-size:40px; margin-bottom:12px; }
+.capsule-card h3 { margin:0 0 8px; font-family:var(--font-heading); font-size:18px; color:var(--deep); }
+.capsule-card.locked h3 { color:var(--muted); }
+.capsule-card .cap-date { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+.capsule-card .cap-body { font-size:14px; line-height:1.8; color:var(--ink); white-space:pre-wrap; text-align:left; }
+.capsule-card img { width:100%; border-radius:8px; margin-top:12px; }
+.capsule-card .cap-lock { font-size:13px; padding:8px 16px; background:rgba(255,255,255,.6); border-radius:99px; display:inline-block; }
+.capsule-empty { grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--muted); }
+@media(max-width:680px){ .scrapbook { columns:2; column-gap:14px; } .scrap-item { margin-bottom:16px; padding:8px 8px 12px; } .scrap-item:before { width:44px; height:16px; top:-6px; } }
+
 .footer { text-align:center; padding:60px 20px 42px; color:#B07F98; font-size:12px; letter-spacing:.08em; }
 .footer .heart { color:#F0A9C4; font-size:20px; display:block; margin-bottom:12px; }
 .admin-link { border:1px solid #E8BFD2; border-radius:99px; padding:9px 13px; background:rgba(255,255,255,.72); color:#315F83; cursor:pointer; font-size:11px; }
 .admin-panel { display:none; position:fixed; inset:0; z-index:20; background:rgba(29,62,88,.35); padding:24px; overflow:auto; }
-.admin-panel.open { display:grid; place-items:center; }
+.admin-panel.open { display:grid; place-items:start center; padding-top:40px; }
+.admin-box { background:#fff; border-radius:16px; width:min(860px,96vw); max-height:90vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.2); }
+.admin-tabs { display:flex; gap:4px; padding:12px 16px 0; background:var(--sky-pale); border-bottom:1px solid var(--line); overflow-x:auto; flex-shrink:0; }
+.admin-tab { padding:10px 16px; border:none; background:none; font-size:12px; letter-spacing:.05em; color:var(--muted); cursor:pointer; border-radius:8px 8px 0 0; white-space:nowrap; transition:all .2s; }
+.admin-tab.active { background:#fff; color:var(--deep); font-weight:600; }
+.admin-tab:hover { color:var(--deep); }
+.admin-body { padding:24px 28px; overflow-y:auto; flex:1; }
+.admin-tab-content { display:none; }
+.admin-tab-content.active { display:block; }
 .admin-card { width:min(760px,100%); max-height:90vh; overflow:auto; background:#FDF6FA; border:1px solid #EBD3E0; border-radius:24px; padding:clamp(22px,4vw,38px); box-shadow:0 25px 80px rgba(27,72,108,.25); }
 .admin-head { display:flex; justify-content:space-between; align-items:center; gap:16px; }
 .admin-head h2 { font-size:30px; margin:0; }
 .admin-close,.admin-action { border:1px solid #E8BFD2; background:white; color:#315F83; border-radius:99px; padding:10px 15px; cursor:pointer; }
 .admin-status { margin:18px 0; padding:14px 16px; border-radius:14px; background:#FBEFF6; color:#315F83; font-size:13px; line-height:1.7; }
 .admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.admin-field { display:flex; flex-direction:column; gap:7px; color:#5C7A95; font-size:12px; }
-.admin-field input,.admin-field textarea { width:100%; border:1px solid #EBCFDD; border-radius:12px; padding:12px; background:white; color:#294B68; font:inherit; }
+.admin-field { display:flex; flex-direction:column; gap:7px; color:var(--muted); font-size:12px; }
+.admin-field input,.admin-field textarea { width:100%; border:1px solid #EBCFDD; border-radius:12px; padding:12px; background:white; color:var(--deep); font:inherit; }
 .admin-field textarea { min-height:90px; resize:vertical; }
 .admin-section { border-top:1px solid #DCEAF5; margin-top:22px; padding-top:20px; }
 .admin-group-label { margin:32px 0 -4px; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#B76E91; font-weight:600; }
-.admin-section h3 { color:#315F83; font-family:var(--site-font-heading); font-weight:400; font-size:23px; }
+.admin-section h3 { color:#315F83; font-family:var(--font-heading); font-weight:400; font-size:23px; }
 .admin-muted { color:#6F8DA8; font-size:12px; line-height:1.7; }
 .admin-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 .admin-setup pre { white-space:pre-wrap; overflow-wrap:anywhere; background:#FBEFF6; padding:14px; border-radius:12px; color:#315F83; font-size:11px; line-height:1.6; }
 .admin-setup summary { cursor:pointer; color:#315F83; font-size:12px; margin:10px 0; }
 .memory-tools { max-width:760px; margin:24px auto 0; text-align:center; }
 .memory-tools p { color:var(--muted); font-size:12px; line-height:1.7; }
-.memory-card { background:#fff; border:1px solid #E1EFF9; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(91,145,185,.07); }
+.memory-card { background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(91,145,185,.07); }
 .memory-card img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
 .memory-card-body { padding:16px; }
-.memory-card h3 { margin:0 0 6px; font:400 22px var(--site-font-heading); color:#315F83; }
+.memory-card h3 { margin:0 0 6px; font:400 22px var(--font-heading); color:#315F83; }
 .memory-card time { color:#6F8DA8; font-size:11px; }
 .memory-card p { color:#8B7892; font-size:13px; line-height:1.7; white-space:pre-wrap; }
 .memory-card-actions { display:flex; gap:8px; }
@@ -195,10 +499,13 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
   .nav { align-items:flex-start; }
   .navlinks { gap:10px; flex-wrap:wrap; justify-content:flex-end; max-width:210px; font-size:9px; }
   .hero { min-height:680px; }
-  .walker { width:110px; height:84px; }
+  .walker { width:150px; height:100px; }
   .jnode { width:min(268px,72vw); }
   .gallery { gap:14px; }
   .adventures { grid-template-columns:1fr; }
+  .countdowns { grid-template-columns:1fr; }
+  .habits { grid-template-columns:repeat(2,1fr); }
+  .monthly-letters { grid-template-columns:1fr; }
   .section { padding-top:75px; }
   .days-together { gap:16px; margin-top:30px; }
 }
@@ -208,11 +515,11 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
 .memory-rail-section{margin:76px 0 20px;margin-left:calc(-50vw + 50%);width:100vw;padding:64px 0 78px;background:linear-gradient(180deg,rgba(225,241,253,.55),rgba(245,250,255,.9));overflow:hidden}
 .memory-rail-heading{text-align:center;padding:0 22px 30px}
 .memory-rail-heading .kicker{margin-bottom:10px}
-.memory-rail-heading h3{font:400 clamp(27px,4vw,42px) var(--site-font-heading);color:#315F83;margin:8px 0}
+.memory-rail-heading h3{font:400 clamp(27px,4vw,42px) var(--font-heading);color:#315F83;margin:8px 0}
 .memory-rail-heading p{font-size:13px;color:#8B7892}
 .memory-rail-viewport{overflow:hidden;width:100%;padding:12px 0 28px}
 .memory-rail{display:flex;align-items:center;gap:clamp(20px,3vw,38px);width:max-content;padding:0 max(7vw,24px);will-change:transform}
-.rail-photo{width:clamp(220px,27vw,330px);flex:0 0 auto;background:#fff;padding:12px 12px 22px;box-shadow:0 18px 42px rgba(67,117,153,.16);border:1px solid #E1EFF9;transform:rotate(var(--rail-tilt));transition:transform .35s,box-shadow .35s}
+.rail-photo{width:clamp(220px,27vw,330px);flex:0 0 auto;background:#fff;padding:12px 12px 22px;box-shadow:0 18px 42px rgba(67,117,153,.16);border:1px solid var(--line);transform:rotate(var(--rail-tilt));transition:transform .35s,box-shadow .35s}
 .rail-photo:hover{transform:rotate(0deg) translateY(-8px);box-shadow:0 24px 48px rgba(67,117,153,.2)}
 .rail-photo img,.rail-photo .rail-placeholder{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:linear-gradient(145deg,#e7f4fd,#b9d9f0)}
 .rail-photo .rail-placeholder{display:grid;place-items:center;color:#6F9DC1;font:42px Georgia,serif}
@@ -223,12 +530,12 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
 .album-section{margin:40px 0 60px;margin-left:calc(-50vw + 50%);width:100vw;padding:50px 0 70px;background:linear-gradient(180deg,rgba(253,246,250,.6),rgba(245,250,255,.9));overflow:hidden}
 .album-heading{text-align:center;padding:0 22px 36px}
 .album-heading .kicker{margin-bottom:10px}
-.album-heading h3{font:400 clamp(27px,4vw,42px) var(--site-font-heading);color:#315F83;margin:8px 0}
+.album-heading h3{font:400 clamp(27px,4vw,42px) var(--font-heading);color:#315F83;margin:8px 0}
 .album-heading p{font-size:13px;color:#8B7892}
 .album-body{max-width:1100px;margin:0 auto;padding:0 22px}
 .album-empty{text-align:center;color:#6F8DA8;font-size:14px;padding:40px 20px;line-height:1.9}
 .album-year{margin-bottom:44px}
-.album-year h4{font:400 clamp(22px,3vw,30px) var(--site-font-heading);color:#315F83;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid #E1EFF9}
+.album-year h4{font:400 clamp(22px,3vw,30px) var(--font-heading);color:#315F83;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .album-season{margin-bottom:28px}
 .album-season-label{font:italic 16px Georgia,serif;color:#8C5A82;margin:0 0 14px;letter-spacing:.04em}
 .album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
@@ -251,28 +558,50 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
 <div id="app">
   <nav class="nav">
     <a class="brand" href="#home">Our Little Sky ♡</a>
-    <div class="navlinks"><a href="#timeline">时间线</a><a href="#memories">回忆</a><a href="#letter">一封信</a><button class="admin-link" id="openAdmin">管理 ♡</button></div>
+    <div class="navlinks">
+      <button class="nav-menu-btn" id="navMenuBtn" type="button">目录 ♡</button>
+      <div class="nav-dropdown" id="navDropdown">
+        <a href="#journey">时间线</a>
+        <a href="#memories">回忆</a>
+        <a href="#moments">日常碎片</a>
+        <a href="#countdowns">倒计时</a>
+        <a href="#bucketlist">愿望清单</a>
+        <a href="#calendar">纪念日历</a>
+        <a href="#mood">今日心情</a>
+        <a href="#places">去过的地方</a>
+        <a href="#universe">小宇宙</a>
+        <a href="#capsule">时光胶囊</a>
+        <a href="#letters">写给你的信</a>
+        <a href="#songs">我们的歌单</a>
+        <a href="#surprise">每日惊喜</a>
+      </div>
+      <button class="admin-link" id="openAdmin">管理 ♡</button>
+    </div>
   </nav>
   <header class="hero" id="home">
-    <div class="sun"></div>
+    <div class="sun-glow"></div>
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+    <div class="cloud cloud-4"></div>
     <div class="hero-content">
-      <div class="eyebrow">我们的小天地</div>
-      <h1>Our Little<br>Sky</h1>
-      <p>同一片天空下，<br>和你一起创造回忆。</p>
-      <a class="cta" href="#story">Explore our story <span>↓</span></a>
+      <div class="eyebrow">A little world for two</div>
+      <h1>Our Little <span class="sky-word">Sky</span></h1>
+      <p class="hero-sub">A little world that belongs to us.</p>
+      <a class="enter-btn" href="#timeline">Enter Our World <span class="arrow">↓</span></a>
       <div class="days-together" role="group" aria-label="Time we have spent together">
-        <div class="dt-item"><div class="dt-num" id="daysCount">—</div><div class="dt-label">在一起的天数</div></div>
+        <div class="dt-item"><div class="dt-num" id="daysCount">—</div><div class="dt-label">Days Together</div></div>
         <div class="dt-div" aria-hidden="true"></div>
-        <div class="dt-item"><div class="dt-num" id="annivCount">—</div><div class="dt-label" id="annivLabel">距离纪念日</div></div>
+        <div class="dt-item"><div class="dt-num" id="annivCount">—</div><div class="dt-label" id="annivLabel">To Our Anniversary</div></div>
       </div>
     </div>
-    <div class="scrollhint">向下滚动 · ♡</div>
+    <div class="scrollhint">Scroll ↓</div>
   </header>
 
 <!-- ===== 视图：our story ===== -->
   <main>
     <section class="section" id="timeline">
-      <div class="section-head"><div class="kicker">我们一起走过的日子</div><h2>我们的时间线</h2><p>每一个开始都值得被铭记。和我们一起走下去。</p></div>
+      <div class="section-head"><div class="kicker">The days we walked together</div><h2>Our Timeline</h2><p>Every beginning deserves to be remembered. Keep walking with us.</p></div>
     </section>
 
 <!-- ===== 视图：the walk（滚动驱动的行走时间线）===== -->
@@ -287,12 +616,12 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
             <div class="walker-shadow"></div>
             <div id="hop"><div id="bob">
               <div class="frames-row">
-                <div class="mini-frame mini-frame-a" id="frameHis">
-                  <div class="frame-photo"><img alt="His photo"><span class="frame-empty">☺</span></div>
+                <div class="mini-frame" id="frameHis" style="transform:rotate(-5deg)">
+                  <div class="frame-photo"><img alt="他的照片"><span class="frame-empty">♡</span></div>
                   <div class="frame-caption">his</div>
                 </div>
-                <div class="mini-frame mini-frame-b" id="frameHer">
-                  <div class="frame-photo"><img alt="Her photo"><span class="frame-empty">☺</span></div>
+                <div class="mini-frame" id="frameHer" style="transform:rotate(4deg)">
+                  <div class="frame-photo"><img alt="她的照片"><span class="frame-empty">♡</span></div>
                   <div class="frame-caption">her</div>
                 </div>
               </div>
@@ -307,29 +636,198 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
         </div>
       </div>
     </section>
-    <section class="section" id="memories">
-      <div class="section-head"><div class="kicker">永恒的小瞬间</div><h2>我们的回忆</h2><p>换上你们最喜欢的合照吧。</p></div>
-      <div class="gallery" id="memoryGallery"><div class="photo" style="--tilt:-2deg"><div class="photo-art"><span>☁</span></div><div class="photo-caption">你的回忆会在这里</div><small>登录后查看共享相册</small></div></div>
 
-      <section class="memory-rail-section" id="memoryRailSection" aria-label="Horizontal memory track">
-        <div class="memory-rail-heading"><div class="kicker">一个又一个小瞬间</div><h3>沿途的回忆</h3><p>慢慢滑动，看看我们收集的小回忆。</p></div>
-        <div class="memory-rail-viewport"><div class="memory-rail" id="memoryRail"><div class="memory-rail-empty">登录后查看你的回忆 ♡</div></div></div>
-      </section>
-      <div class="memory-tools" id="memoryNotice"><p>点击右上角「管理 ♡」登录后查看私密的共享回忆和照片。</p></div>
-      <section class="album-section" id="albumSection" aria-label="Our photo album">
-        <div class="album-heading"><div class="kicker">我们的小相册</div><h3>四季相册</h3><p>每张照片，按发生的季节分类。</p></div>
-        <div class="album-body" id="albumBody"><div class="album-empty">你的第一张照片正在这里等你 ♡<br>去「管理 ♡」里上传吧</div></div>
-      </section>
-    </section>
-    <section class="section" id="adventures">
-      <div class="section-head"><div class="kicker">有你在的地方都特别</div><h2>我们的冒险</h2><p>去过的地方，和还在等我们的地方。</p></div>
-      <div class="adventures">
-        <div class="adventure"><h3>我们去过的地方</h3><p>记录你们的旅行、约会和最爱的小发现。</p></div>
-        <div class="adventure"><h3>想去的地方</h3><p>一起冒险的愿望清单，越来越长。</p></div>
+    <!-- ===== P3: 日常碎片照片墙 ===== -->
+    <section class="section" id="moments">
+      <div class="section-head"><div class="kicker">Little daily moments</div><h2>Everyday Fragments</h2><p>Polaroids taped into a journal—each one a small joy.</p></div>
+      <div class="scrapbook" id="scrapbook">
+        <div class="scrap-empty">还没有碎片照片<br><br>去「管理 ♡」里上传吧</div>
       </div>
     </section>
+    <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose">✕</button><img id="lightboxImg" alt=""></div>
+
+    <!-- ===== 倒计时 ===== -->
+    <section class="section" id="countdowns">
+      <div class="section-head"><div class="kicker">Waiting for the day</div><h2>Countdown</h2><p>Every day worth waiting for is getting closer.</p></div>
+      <div class="countdowns">
+        <div class="countdown-card">
+          <div class="cd-num" id="cdMeeting">—</div>
+          <div class="cd-label">下次见面</div>
+          <div class="cd-date" id="cdMeetingDate"></div>
+        </div>
+        <div class="countdown-card">
+          <div class="cd-num" id="cdBirthday">—</div>
+          <div class="cd-label">她的生日</div>
+          <div class="cd-date" id="cdBirthdayDate"></div>
+        </div>
+        <div class="countdown-card">
+          <div class="cd-num" id="cdTrip">—</div>
+          <div class="cd-label">下一次旅行</div>
+          <div class="cd-date" id="cdTripDate"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 我们的小习惯 ===== -->
+    <section class="section" id="habits">
+      <div class="section-head"><div class="kicker">Only we understand</div><h2>Our Little Habits</h2><p>Things no one else gets, but we know without saying.</p></div>
+      <div class="habits">
+        <div class="habit-card"><div class="habit-icon">♡</div><div class="habit-text">她生气时会鼓着脸不说话</div><div class="habit-tag">昵称</div></div>
+        <div class="habit-card"><div class="habit-icon">☁</div><div class="habit-text">我总说"最后五分钟"再睡</div><div class="habit-tag">口头禅</div></div>
+        <div class="habit-card"><div class="habit-icon">✧</div><div class="habit-text">过马路她一定会牵我的手</div><div class="habit-tag">小动作</div></div>
+        <div class="habit-card"><div class="habit-icon">♡</div><div class="habit-text">吃到好吃的第一口一定分我</div><div class="habit-tag">小默契</div></div>
+      </div>
+    </section>
+
+    <!-- ===== 愿望清单 ===== -->
+    <section class="section" id="bucketlist">
+      <div class="section-head"><div class="kicker">Things we want to do together</div><h2>Bucket List</h2><p>Crossing them off one by one, making them real.</p></div>
+      <div class="bucket-progress" id="bucketProgress">
+        <div class="bucket-progress-text"><strong id="bucketDoneCount">0</strong> / <span id="bucketTotalCount">0</span> 已实现</div>
+        <div class="bucket-progress-bar"><div class="bucket-progress-fill" id="bucketFill" style="width:0%"></div></div>
+      </div>
+      <div class="bucket-grid" id="bucketGrid">
+        <div class="bucket-empty">还没有愿望<br><br>去「管理 ♡」里添加吧</div>
+      </div>
+    </section>
+
+    <!-- ===== 专属纪念日历 ===== -->
+    <section class="section" id="calendar">
+      <div class="section-head"><div class="kicker">Our special days</div><h2>Memory Calendar</h2><p>Every special day deserves to be marked.</p></div>
+      <div class="cal-next" id="calNext"></div>
+      <div class="cal-wrap" style="margin-top:20px">
+        <div class="cal-header">
+          <button class="cal-nav" id="calPrev">←</button>
+          <div class="cal-title" id="calTitle"></div>
+          <button class="cal-nav" id="calNextBtn">→</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <span><span class="dot" style="background:var(--sky)"></span> 今天</span>
+          <span><span class="dot" style="background:var(--blush)"></span> 纪念日</span>
+          <span><span class="dot" style="background:var(--blush-deep)"></span> 有回忆</span>
+        </div>
+      </div>
+    </section>
+    <div class="cal-modal" id="calModal">
+      <div class="cal-modal-card">
+        <h3 id="cmDate"></h3>
+        <p id="cmLabel" style="display:none"></p>
+        <textarea id="cmNote" placeholder="这一天发生了什么..."></textarea>
+        <div class="actions">
+          <button class="close" id="cmClose">关闭</button>
+          <button class="save" id="cmSave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 今日心情 ===== -->
+    <section class="section" id="mood">
+      <div class="section-head"><div class="kicker">How are you feeling today</div><h2>Daily Mood</h2><p>Describe today's mood with weather, then tell each other.</p></div>
+      <div class="mood-row">
+        <div class="mood-card" id="moodHim">
+          <h3>Him</h3>
+          <div class="mood-date" id="moodDateHim"></div>
+          <div class="mood-options" data-who="him"></div>
+          <textarea id="moodTextHim" placeholder="今天发生了什么..."></textarea>
+          <div class="mood-photo-slot" id="moodPhotoHim">+ 添加照片</div>
+          <button class="mood-save" data-who="him">保存心情</button>
+        </div>
+        <div class="mood-card" id="moodHer">
+          <h3>Her</h3>
+          <div class="mood-date" id="moodDateHer"></div>
+          <div class="mood-options" data-who="her"></div>
+          <textarea id="moodTextHer" placeholder="今天发生了什么..."></textarea>
+          <div class="mood-photo-slot" id="moodPhotoHer">+ 添加照片</div>
+          <button class="mood-save" data-who="her">保存心情</button>
+        </div>
+      </div>
+      <div class="mood-history">
+        <h3>最近的心情</h3>
+        <div class="mood-history-list" id="moodHistory"></div>
+      </div>
+    </section>
+
+    <!-- ===== 我们去过的地方 ===== -->
+    <section class="section" id="places">
+      <div class="section-head"><div class="kicker">Roads we've walked together</div><h2>Places We've Been</h2><p>Every coordinate holds a memory of us.</p></div>
+      <div class="map-wrap"><div id="travelMap"></div></div>
+      <div class="places-list" id="placesList"></div>
+    </section>
+
+    <!-- ===== 我们的小宇宙 ===== -->
+    <section class="section" id="universe">
+      <div class="section-head"><div class="kicker">Every star is a memory</div><h2>Our Universe</h2><p>Click a star to see the story hidden inside.</p></div>
+      <div class="starfield" id="starfield"></div>
+      <div class="moon" id="moon" title="月亮的悄悄话">
+        <div class="moon-crater" style="width:12px;height:12px;top:14px;left:16px"></div>
+        <div class="moon-crater" style="width:8px;height:8px;top:30px;left:32px"></div>
+        <div class="moon-crater" style="width:6px;height:6px;top:22px;left:38px"></div>
+      </div>
+      <div class="universe-stars" id="universeStars"></div>
+    </section>
+    <div class="universe-modal" id="universeModal">
+      <div class="universe-card">
+        <button class="close" id="universeClose">✕</button>
+        <h3 id="usTitle"></h3>
+        <div class="uc-date" id="usDate"></div>
+        <p id="usBody"></p>
+      </div>
+    </div>
+
+    <!-- ===== 时光胶囊 ===== -->
+    <section class="section" id="capsule">
+      <div class="section-head"><div class="kicker">To us in the future</div><h2>Time Capsule</h2><p>Seal today's words, open them when that day comes.</p></div>
+      <div class="capsule-grid" id="capsuleGrid">
+        <div class="capsule-empty">还没有胶囊<br><br>去「管理 ♡」里封第一颗吧</div>
+      </div>
+    </section>
+
+    <!-- ===== Letters to You ===== -->
+    <section class="section" id="letters">
+      <div class="section-head"><div class="kicker">Words written for each other</div><h2>Letters to You</h2><p>Some things are better written slowly on paper.</p></div>
+      <div class="letters-grid" id="lettersGrid">
+        <div class="letters-empty">还没有信<br><br>去「管理 ♡」里写第一封吧</div>
+      </div>
+    </section>
+    <div class="letter-modal" id="letterModal">
+      <div class="letter-paper">
+        <button class="letter-close" id="letterClose">✕</button>
+        <div class="lp-date" id="lpDate"></div>
+        <div class="lp-body" id="lpBody"></div>
+        <div class="lp-sign" id="lpSign"></div>
+      </div>
+    </div>
+
+    <!-- ===== 我们的歌 ===== -->
+    <section class="section" id="songs">
+      <div class="section-head"><div class="kicker">This song always makes me think of you</div><h2>Our Playlist</h2><p>Every song has a story about us.</p></div>
+      <div class="playlist" id="playlist">
+        <div class="song-empty">还没有歌<br><br>去「管理 ♡」里添加第一首吧</div>
+      </div>
+    </section>
+
+    <!-- ===== 每日惊喜 ===== -->
+    <section class="section" id="surprise">
+      <div class="section-head"><div class="kicker">A little surprise every day</div><h2>Daily Surprise</h2><p>Open it and see what I prepared for you today.</p></div>
+      <div class="surprise-card" id="surpriseCard">
+        <div class="surprise-inner">
+          <div class="surprise-front">
+            <div class="sf-icon">🎁</div>
+            <h3>今天的惊喜</h3>
+            <p>点击翻开 ♡</p>
+          </div>
+          <div class="surprise-back">
+            <div class="sb-label" id="sbLabel">Surprise</div>
+            <div class="sb-content" id="sbContent"></div>
+            <div class="sb-date" id="sbDate"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="letter">
-      <div class="section-head"><div class="kicker">心里话</div><h2>写给你</h2><p>这个小网站最重要的部分。</p></div>
+      <div class="section-head"><div class="kicker">From the heart</div><h2>To You</h2><p>The most important part of this little site.</p></div>
       <article class="letter">
         <h3>致我最爱的你：</h3>
         <p>我为我们做了这个小地方，因为我永远不想忘记我们一起度过的美好时刻。大大的冒险，安静的日子，傻傻的笑话，还有所有让和你在一起就像家一样的小事。</p>
@@ -347,12 +845,57 @@ h2 { font-family:var(--site-font-heading); font-size:clamp(34px,5vw,52px); font-
   <section class="admin-card" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
     <div class="admin-head"><div><div class="kicker">A private space for two</div><h2 id="adminTitle">Our memory studio</h2></div><button class="admin-close" id="closeAdmin">Close ✕</button></div>
     <div class="admin-status" id="backendStatus">Loading secure connection…</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:16px 0;padding:12px;background:var(--sky-pale);border-radius:10px">
+      <a href="#authSection" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">登录</a>
+      <a href="#adminBasics" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">基础设置</a>
+      <a href="#adminScrap" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">碎片照片</a>
+      <a href="#adminCal" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">日历</a>
+      <a href="#adminPlaces" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">旅行</a>
+      <a href="#adminStars" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">星空</a>
+      <a href="#adminCapsule" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">胶囊</a>
+      <a href="#adminSurprise" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">惊喜</a>
+      <a href="#adminLetters" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">信件</a>
+      <a href="#adminContent" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">文字内容</a>
+      <a href="#adminTimeline" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">时间线</a>
+      <a href="#adminAlbum" style="font-size:11px;padding:4px 10px;background:#fff;border-radius:99px;color:var(--deep);text-decoration:none">相册</a>
+    </div>
     <div class="admin-section" id="authSection"><h3>私密登录</h3><div class="admin-grid"><label class="admin-field">邮箱地址<input id="authEmail" type="email" placeholder="你的邮箱" autocomplete="username"></label><label class="admin-field">密码<input id="auth密码" type="password" placeholder="你的密码" autocomplete="current-password"></label></div><div class="admin-actions"><button class="admin-action" id="signInButton">登录</button><button class="admin-action admin-hidden" id="signOutButton">退出登录</button></div><p class="admin-muted">只有两个邀请账号可以进入。你的账号是管理员，女朋友的账号是只读。</p></div>
     <div class="admin-section"><h3>在一起的日子</h3><p class="admin-muted">你们在一起的日子。首页的天数会自动更新。</p><div class="admin-grid"><label class="admin-field">在一起自<input id="togetherSinceInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveStartDateButton" type="button">保存日期</button></div></div>
+    <div class="admin-section"><h3>倒计时日期</h3><p class="admin-muted">设置倒计时板块的三个日期。</p><div class="admin-grid"><label class="admin-field">下次见面<input id="meetingDateInput" type="date"></label><label class="admin-field">她的生日<input id="birthdayDateInput" type="date"></label><label class="admin-field">下一次旅行<input id="tripDateInput" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="saveCountdownButton" type="button">保存倒计时</button></div></div>
+    <div id="adminBasics"></div>
+    <div class="admin-group-label">日常碎片</div>
+    <div id="adminScrap"></div>
+    <div class="admin-section"><h3>碎片照片墙</h3><p class="admin-muted">上传日常随手拍，会以拍立得拼贴形式展示。可多选。</p><div class="admin-grid"><label class="admin-field">选择照片（可多选）<input id="scrapPhotoInput" type="file" accept="image/*" multiple></label></div><div class="admin-actions"><button class="admin-action" id="scrapAddButton" type="button">添加到碎片墙</button></div></div>
+    <div class="admin-group-label">纪念日历</div>
+    <div id="adminCal"></div>
+    <div class="admin-section"><h3>重要日期</h3><p class="admin-muted">设置特别的日子，会在日历上标记。格式：MM-DD 名称</p><div class="admin-grid"><label class="admin-field">纪念日列表（每行一条，如 06-01 恋爱纪念日）<textarea id="calSpecialInput" rows="4" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label></div><div class="admin-actions"><button class="admin-action" id="calSpecialSave" type="button">保存日期</button></div></div>
+    <div class="admin-group-label">我们去过的地方</div>
+    <div id="adminPlaces"></div>
+    <div class="admin-section"><h3>添加地点</h3><p class="admin-muted">在地图上点选位置，填写信息。坐标可从地图 URL 复制（如 30.2741,120.1551 是杭州）。</p><div class="admin-grid"><label class="admin-field">地点名称<input id="placeName" placeholder="如：杭州西湖"></label><label class="admin-field">纬度<input id="placeLat" placeholder="30.27"></label><label class="admin-field">经度<input id="placeLng" placeholder="120.15"></label><label class="admin-field">日期<input id="placeDate" type="date"></label><label class="admin-field">故事<textarea id="placeStory" rows="2" placeholder="这里发生了什么..."></textarea></label><label class="admin-field">照片<input id="placePhoto" type="file" accept="image/*"></label></div><div class="admin-actions"><button class="admin-action" id="placeAddButton" type="button">添加地点</button></div></div>
+    <div class="admin-group-label">我们的小宇宙</div>
+    <div id="adminStars"></div>
+    <div class="admin-section"><h3>添加星星</h3><p class="admin-muted">每颗星代表一段回忆。位置用百分比（0-100）控制在夜空中的位置。</p><div class="admin-grid"><label class="admin-field">星星名称<input id="starName" placeholder="如：第一次见面"></label><label class="admin-field">日期<input id="starDate" type="date"></label><label class="admin-field">X 位置（左%, 0-100）<input id="starX" type="number" min="5" max="95" placeholder="50"></label><label class="admin-field">Y 位置（上%, 0-100）<input id="starY" type="number" min="10" max="90" placeholder="50"></label><label class="admin-field">故事<textarea id="starStory" rows="2" placeholder="这颗星的故事..."></textarea></label></div><div class="admin-actions"><button class="admin-action" id="starAddButton" type="button">点亮星星</button></div></div>
+    <div class="admin-group-label">时光胶囊</div>
+    <div id="adminCapsule"></div>
+    <div class="admin-section"><h3>封装新胶囊</h3><p class="admin-muted">写下现在想对未来说的话，设一个开启日期，到期前看不到内容。</p><div class="admin-grid"><label class="admin-field">标题<input id="capTitle" placeholder="如：给一年后的我们"></label><label class="admin-field">开启日期<input id="capUnlockDate" type="date"></label><label class="admin-field">内容<textarea id="capBody" rows="4" placeholder="现在的想法..."></textarea></label><label class="admin-field">照片（可选）<input id="capPhoto" type="file" accept="image/*"></label></div><div class="admin-actions"><button class="admin-action" id="capAddButton" type="button">封装胶囊</button></div></div>
+    <div class="admin-group-label">每日惊喜</div>
+    <div id="adminSurprise"></div>
+    <div class="admin-section"><h3>惊喜文案</h3><p class="admin-muted">每行一句，每天随机展示一句。也可以是小任务。</p><label class="admin-field"><textarea id="surpriseInput" rows="5" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px" placeholder="比如：今天也要想你哦～&#10;一起喝杯奶茶吧&#10;翻一翻去年的照片"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveSurpriseButton" type="button">保存惊喜</button></div></div>
+    <div class="admin-group-label">写给你的信</div>
+    <div id="adminLetters"></div>
+    <div class="admin-section"><h3>新信件</h3><p class="admin-muted">写信给对方。可设置未来解锁日期，到期前对方看不到内容。</p><div class="admin-grid"><label class="admin-field">寄件人<select id="letterFrom"><option value="Him">Him → Her</option><option value="Her">Her → Him</option></select></label><label class="admin-field">解锁日期（留空=立即解锁）<input id="letterUnlockDate" type="date"></label><label class="admin-field">信件内容<textarea id="letterBody" rows="4" placeholder="写下想说的话..."></textarea></label></div><div class="admin-actions"><button class="admin-action" id="letterAddButton" type="button">寄出这封信</button></div></div>
+    <div class="admin-group-label">新板块内容</div>
+    <div id="adminContent"></div>
+    <div class="admin-section"><h3>我们的小习惯</h3><p class="admin-muted">每行一条，共 4 条。</p><label class="admin-field"><textarea id="habitsInput" rows="5" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveHabitsButton" type="button">保存习惯</button></div></div>
+    <div class="admin-section"><h3>愿望清单</h3><p class="admin-muted">每条愿望一行。完成后在页面上点圆圈标记已实现，可上传纪念照片。</p><label class="admin-field">愿望列表（每行一条）<textarea id="bucketInput" rows="6" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveBucketButton" type="button">保存清单</button></div></div>
+    <div class="admin-section"><h3>每月一封信</h3><p class="admin-muted">每段一封，用 --- 分隔。</p><label class="admin-field"><textarea id="lettersInput" rows="8" style="width:100%;padding:8px;border:1px solid #EBD3E0;border-radius:8px;font-size:13px"></textarea></label><div class="admin-actions"><button class="admin-action" id="saveLettersButton" type="button">保存信件</button></div></div>
+    <div class="admin-section"><h3>我们的歌单</h3><p class="admin-muted">添加一起听过的歌，支持封面和故事。</p><div class="admin-grid"><label class="admin-field">歌名<input id="songName" placeholder="如：小情歌"></label><label class="admin-field">歌手<input id="songArtist" placeholder="如：苏打绿"></label><label class="admin-field">封面<input id="songCover" type="file" accept="image/*"></label><label class="admin-field">故事<textarea id="songStory" rows="2" placeholder="这首歌对我们的意义..."></textarea></label></div><div class="admin-actions"><button class="admin-action" id="songAddButton" type="button">添加歌曲</button></div></div>
     <div class="admin-group-label">时间线</div>
+    <div id="adminTimeline"></div>
     <div class="admin-section"><h3>我们的小相框</h3><p class="admin-muted">为路上的拍立得相框选一张照片。存在这台设备上，随时可以换。</p><div class="admin-grid"><label class="admin-field">他的相框<input id="frameHisInput" type="file" accept="image/*"></label><label class="admin-field">她的相框<input id="frameHerInput" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="frameHisPreview" alt="他的相框 preview"><img id="frameHerPreview" alt="她的相框 preview"></div><div class="admin-actions"><button class="admin-action" id="frameHisRemove" type="button">删除他的照片</button><button class="admin-action" id="frameHerRemove" type="button">删除她的照片</button></div></div>
     <div class="admin-section"><h3>时间线节点</h3><p class="admin-muted">为每个里程碑节点上传一张照片。存在这台设备上。</p><div class="admin-grid" style="grid-template-columns:1fr 1fr"><label class="admin-field">① 我们相遇的那天<input id="moment0Input" type="file" accept="image/*"></label><label class="admin-field">② 第一次晚安<input id="moment1Input" type="file" accept="image/*"></label><label class="admin-field">③ 第一次约会<input id="moment2Input" type="file" accept="image/*"></label><label class="admin-field">④ 第一次牵手<input id="moment3Input" type="file" accept="image/*"></label><label class="admin-field">⑤ 第一次亲吻<input id="moment4Input" type="file" accept="image/*"></label><label class="admin-field">⑥ 第一次旅行<input id="moment5Input" type="file" accept="image/*"></label><label class="admin-field">⑦ 我们变成了"我们"<input id="moment6Input" type="file" accept="image/*"></label><label class="admin-field">⑧ 第一次吵架和好<input id="moment7Input" type="file" accept="image/*"></label><label class="admin-field">⑨ 见你的家人<input id="moment8Input" type="file" accept="image/*"></label><label class="admin-field">⑩ 一起过的第一个生日<input id="moment9Input" type="file" accept="image/*"></label><label class="admin-field">⑪ 第一束花<input id="moment10Input" type="file" accept="image/*"></label><label class="admin-field">⑫ 平凡的一天<input id="moment11Input" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="moment0Preview" alt=""><img id="moment1Preview" alt=""><img id="moment2Preview" alt=""><img id="moment3Preview" alt=""><img id="moment4Preview" alt=""><img id="moment5Preview" alt=""><img id="moment6Preview" alt=""><img id="moment7Preview" alt=""><img id="moment8Preview" alt=""><img id="moment9Preview" alt=""><img id="moment10Preview" alt=""><img id="moment11Preview" alt=""></div><div class="admin-actions"><button class="admin-action" id="moment0Remove" type="button">Remove ①</button><button class="admin-action" id="moment1Remove" type="button">Remove ②</button><button class="admin-action" id="moment2Remove" type="button">Remove ③</button><button class="admin-action" id="moment3Remove" type="button">Remove ④</button><button class="admin-action" id="moment4Remove" type="button">Remove ⑤</button><button class="admin-action" id="moment5Remove" type="button">Remove ⑥</button><button class="admin-action" id="moment6Remove" type="button">Remove ⑦</button><button class="admin-action" id="moment7Remove" type="button">Remove ⑧</button><button class="admin-action" id="moment8Remove" type="button">Remove ⑨</button><button class="admin-action" id="moment9Remove" type="button">Remove ⑩</button><button class="admin-action" id="moment10Remove" type="button">Remove ⑪</button><button class="admin-action" id="moment11Remove" type="button">Remove ⑫</button></div></div>
     <div class="admin-group-label">回忆相册</div>
+    <div id="adminAlbum"></div>
     <div class="admin-section"><h3>相册照片</h3><p class="admin-muted">选择一张或多张照片，选好日期，会自动归到对应年份和季节。</p><div class="admin-grid"><label class="admin-field">照片（可多选）<input id="albumPhotoInput" type="file" accept="image/*" multiple></label><label class="admin-field">拍摄日期<input id="album日期Input" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="albumAddButton" type="button">添加照片</button><button class="admin-action" id="albumClearButton" type="button">清空全部</button></div></div>
     <div class="admin-section admin-hidden" id="memoryEditor"><h3 id="memoryFormTitle">添加回忆</h3><input id="memoryId" type="hidden"><div class="admin-grid"><label class="admin-field">回忆标题<input id="memoryTitle" placeholder="我永远记得的一天" maxlength="120"></label><label class="admin-field">日期<input id="memory日期" type="date"></label></div><label class="admin-field" style="margin-top:14px">你的故事<textarea id="memoryStory" placeholder="写下发生了什么……"></textarea></label><label class="admin-field" style="margin-top:14px">上传照片<input id="memoryPhotos" type="file" accept="image/*" multiple></label><div class="admin-actions"><button class="admin-action" id="saveMemoryButton">保存回忆</button><button class="admin-action" id="cancelEditButton" type="button">清空表单</button></div><p class="admin-muted">照片存在私密云端，关闭浏览器后依然保留。</p></div>
     <div class="admin-section admin-setup">
@@ -449,7 +992,7 @@ let TOGETHER_SINCE = localStorage.getItem('littleSky.togetherSince') || DEFAULT_
 
 const adminPanel = document.getElementById('adminPanel');
 const statusBox = document.getElementById('backendStatus');
-const gallery = document.getElementById('memoryGallery');
+const gallery = document.getElementById('memoryGallery'); // may be null after section removal
 const notice = document.getElementById('memoryNotice');
 const memoryRail = document.getElementById('memoryRail');
 let railAnimation = null;
@@ -506,10 +1049,10 @@ async function loadMemories() {
   if(error){setStatus('Could not load memories: '+error.message,'error');return;}
   memoryCache=data||[];
   if(!memoryCache.length){
-    gallery.innerHTML='<div class="photo"><div class="photo-art"><span>♡</span></div><div class="photo-caption">Your first memory is waiting</div><small>ADD A MEMORY IN YOUR PRIVATE STUDIO</small></div>';
+    if(gallery) gallery.innerHTML='<div class="photo"><div class="photo-art"><span>♡</span></div><div class="photo-caption">Your first memory is waiting</div><small>ADD A MEMORY IN YOUR PRIVATE STUDIO</small></div>';
     // Keep the rail in sync too, or it stays pinned on stale photos.
     setupMemoryRail();
-    notice.innerHTML='<p>0 shared memories yet · Signed in as '+(currentRole==='admin'?'Administrator':'View only')+'</p>';
+    if(notice) notice.innerHTML='<p>0 shared memories yet · Signed in as '+(currentRole==='admin'?'Administrator':'View only')+'</p>';
     return;
   }
   const html=await Promise.all(memoryCache.map(async item=>{
@@ -518,18 +1061,18 @@ async function loadMemories() {
     const actions=currentRole==='admin'?'<div class="memory-card-actions"><button data-edit="'+item.id+'">Edit</button><button data-delete="'+item.id+'">Delete</button></div>':'';
     return '<article class="memory-card">'+photo+'<div class="memory-card-body"><h3>'+safeText(item.title)+'</h3><time>'+safeText(item.memory_date||'')+'</time><p>'+safeText(item.story)+'</p>'+actions+'</div></article>';
   }));
-  gallery.innerHTML=html.join('');
+  if(gallery) gallery.innerHTML=html.join('');
   const railHtml=await Promise.all(memoryCache.map(async (item,index)=>{
     let image='<div class="rail-placeholder">♡</div>';
     if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy">';}
     const tilt=[-2,1.5,-1,2][index%4];
     return '<article class="rail-photo" style="--rail-tilt:'+tilt+'deg">'+image+'<div class="rail-photo-caption">'+safeText(item.title)+'</div><div class="rail-photo-date">'+safeText(item.memory_date||'A LITTLE MOMENT')+'</div></article>';
   }));
-  memoryRail.innerHTML=railHtml.join('');
-  setupMemoryRail();
-  gallery.querySelectorAll('[data-edit]').forEach(button=>button.addEventListener('click',()=>{const item=memoryCache.find(row=>row.id===button.dataset.edit);if(!item)return;document.getElementById('memoryId').value=item.id;document.getElementById('memoryTitle').value=item.title;document.getElementById('memory日期').value=item.memory_date||'';document.getElementById('memoryStory').value=item.story||'';document.getElementById('memoryFormTitle').textContent='Edit memory';editor.scrollIntoView({behavior:'smooth'});}));
-  gallery.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',async()=>{if(!confirm('Delete this memory and its photos?'))return;const item=memoryCache.find(row=>row.id===button.dataset.delete);if(item&&item.photo_paths&&item.photo_paths.length)await supabaseClient.storage.from('couple-memories').remove(item.photo_paths);const {error}=await supabaseClient.from('memories').delete().eq('id',button.dataset.delete);if(error)setStatus('删除失败：'+error.message,'error');else{setStatus('回忆已删除。','success');await loadMemories();}}));
-  notice.innerHTML='<p>'+memoryCache.length+' shared memories · Signed in as '+(currentRole==='admin'?'Administrator':'View only')+'</p>';
+  if(memoryRail) memoryRail.innerHTML=railHtml.join('');
+  if(memoryRail) setupMemoryRail();
+  if(gallery) gallery.querySelectorAll('[data-edit]').forEach(button=>button.addEventListener('click',()=>{const item=memoryCache.find(row=>row.id===button.dataset.edit);if(!item)return;document.getElementById('memoryId').value=item.id;document.getElementById('memoryTitle').value=item.title;document.getElementById('memory日期').value=item.memory_date||'';document.getElementById('memoryStory').value=item.story||'';document.getElementById('memoryFormTitle').textContent='Edit memory';editor.scrollIntoView({behavior:'smooth'});}));
+  if(gallery) gallery.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',async()=>{if(!confirm('Delete this memory and its photos?'))return;const item=memoryCache.find(row=>row.id===button.dataset.delete);if(item&&item.photo_paths&&item.photo_paths.length)await supabaseClient.storage.from('couple-memories').remove(item.photo_paths);const {error}=await supabaseClient.from('memories').delete().eq('id',button.dataset.delete);if(error)setStatus('删除失败：'+error.message,'error');else{setStatus('回忆已删除。','success');await loadMemories();}}));
+  if(notice) notice.innerHTML='<p>'+memoryCache.length+' shared memories · Signed in as '+(currentRole==='admin'?'Administrator':'View only')+'</p>';
 }
 
 async function syncSession(session) {
@@ -541,8 +1084,8 @@ async function syncSession(session) {
     setStatus('用邀请的两个账号之一登录。');
     memoryCache=[];
     setupMemoryRail();
-    gallery.innerHTML='<div class="photo"><div class="photo-art"><span>☁</span></div><div class="photo-caption">Your private memories</div><small>SIGN IN TO VIEW</small></div>';
-    notice.innerHTML='<p>点击右上角「管理 ♡」登录后查看私密的共享回忆和照片。</p>';
+    if(gallery) gallery.innerHTML='<div class="photo"><div class="photo-art"><span>☁</span></div><div class="photo-caption">Your private memories</div><small>SIGN IN TO VIEW</small></div>';
+    if(notice) notice.innerHTML='<p>点击右上角「管理 ♡」登录后查看私密的共享回忆和照片。</p>';
     return;
   }
   const {data,error}=await supabaseClient.from('couple_members').select('role').eq('user_id',currentUser.id).maybeSingle();
@@ -690,8 +1233,8 @@ initCounters();
   function build(){
     const W = Math.max(320, viewportEl.clientWidth);
     const vh = viewportEl.clientHeight || 560;
-    const wW = walkerEl.offsetWidth || 132;
-    const wH = walkerEl.offsetHeight || 96;
+    const wW = walkerEl.offsetWidth || 180;
+    const wH = walkerEl.offsetHeight || 120;
     const midY = vh * 0.52;
     const amp = vh * 0.09;
     const gap = W > 700 ? 700 : 560;
@@ -728,13 +1271,20 @@ initCounters();
 
     const laid = [];
     const nodeOffset = introSegs > 0 ? 2 : 1;
+    const nodeCenters = []; // 每个节点对应的实际路径进度
     nodeEls.forEach((el,i)=>{
       const p = pts[i + nodeOffset];
       const cw = el.offsetWidth || 280, ch = el.offsetHeight || 340;
-      // 卡片在轨道中的位置：让它弹出时正好在屏幕正中央
       el.style.left = Math.round(p.x - wW/2 - cw/2)+'px';
       el.style.top = Math.round(vh/2 - ch/2)+'px';
       laid.push({x:p.x});
+      // 找到相框走到这个节点 x 位置时的路径进度
+      let bestIdx = 0, bestDist = Infinity;
+      samples.forEach((s,si)=>{
+        const d = Math.abs(s.x - p.x);
+        if(d < bestDist){ bestDist = d; bestIdx = si; }
+      });
+      nodeCenters.push(bestIdx / samples.length);
     });
     if(endEl){
       endEl.style.left = Math.round(endX - 240)+'px';
@@ -744,7 +1294,7 @@ initCounters();
     // 滚动高度 = 引导段 + 每个节点一屏
     journeyEl.style.height = ((n + introSegs) * 100) + 'vh';
 
-    geo = {W, vh, samples, laid, n, introSegs, wx: wW/2, feet: wH*0.88, translateMax: Math.max(0, trackW - W)};
+    geo = {W, vh, samples, laid, n, introSegs, nodeCenters, wx: wW/2, feet: wH*0.88, translateMax: Math.max(0, trackW - W)};
     draw(0);
   }
 
@@ -760,16 +1310,16 @@ initCounters();
     const a = samples[Math.max(0, idx-1)], b = samples[Math.min(samples.length-1, idx+1)];
     const deg = Math.atan2(b.y-a.y, b.x-a.x) * 180/Math.PI;
     const tilt = clamp(deg * 0.4, -8, 8);
-    walkerEl.style.transform = 'translate3d(' + (s.x - geo.wx + tx).toFixed(1) + 'px,'
+    walkerEl.style.transform = 'translate3d(' + (s.x - geo.wx).toFixed(1) + 'px,'
       + (s.y - geo.feet).toFixed(1) + 'px,0) rotate(' + tilt.toFixed(1) + 'deg)';
 
     geo.laid.forEach((n,i)=>{
-      const center = (geo.introSegs + i + 0.5) / (geo.n + geo.introSegs);
-      const half = 0.22 / (geo.n + geo.introSegs);
+      const center = geo.nodeCenters[i];
+      const half = 0.02; // 相框走到节点时瞬间弹出
       const visible = progress > center - half && progress < center + half;
       nodeEls[i].classList.toggle('in', visible);
     });
-    if(endEl) endEl.classList.toggle('in', progress > (geo.introSegs + geo.n - 0.3) / (geo.n + geo.introSegs));
+    if(endEl) endEl.classList.toggle('in', progress > 0.95);
     const hint = document.getElementById('journeyHint');
     if(hint) hint.style.opacity = progress > 0.03 ? '0' : '';
   }
@@ -810,6 +1360,15 @@ let lastFocusedElement=null;
 function openPanel(){lastFocusedElement=document.activeElement;adminPanel.classList.add('open');adminPanel.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';const first=document.getElementById('authEmail');if(first&&first.offsetParent)first.focus();}
 function closePanel(){adminPanel.classList.remove('open');adminPanel.setAttribute('aria-hidden','true');document.body.style.overflow='';if(lastFocusedElement&&lastFocusedElement.focus)lastFocusedElement.focus();}
 document.getElementById('openAdmin').addEventListener('click',openPanel);
+// 目录下拉
+(function(){
+  var btn = document.getElementById('navMenuBtn');
+  var dd = document.getElementById('navDropdown');
+  if(!btn || !dd) return;
+  btn.addEventListener('click', function(e){ e.stopPropagation(); dd.classList.toggle('open'); });
+  dd.addEventListener('click', function(){ dd.classList.remove('open'); });
+  document.addEventListener('click', function(){ dd.classList.remove('open'); });
+})();
 document.getElementById('closeAdmin').addEventListener('click',closePanel);
 adminPanel.addEventListener('click',event=>{if(event.target===adminPanel)closePanel();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.classList.contains('open'))closePanel();});
@@ -894,6 +1453,146 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
   });
 })();
 
+(function initCountdownDates(){
+  const mInput = document.getElementById('meetingDateInput');
+  const bInput = document.getElementById('birthdayDateInput');
+  const tInput = document.getElementById('tripDateInput');
+  const btn = document.getElementById('saveCountdownButton');
+  if(mInput) mInput.value = localStorage.getItem('littleSky.meetingDate') || '';
+  if(bInput) bInput.value = localStorage.getItem('littleSky.birthdayDate') || '';
+  if(tInput) tInput.value = localStorage.getItem('littleSky.tripDate') || '';
+  if(btn) btn.addEventListener('click', () => {
+    if(mInput.value) localStorage.setItem('littleSky.meetingDate', mInput.value);
+    if(bInput.value) localStorage.setItem('littleSky.birthdayDate', bInput.value);
+    if(tInput.value) localStorage.setItem('littleSky.tripDate', tInput.value);
+    btn.textContent = 'Saved ✓';
+    setTimeout(()=>{ btn.textContent = '保存倒计时'; location.reload(); }, 800);
+  });
+})();
+
+/* ===== 新板块：从 localStorage 渲染内容 ===== */
+(function renderCustomSections(){
+  // 小习惯
+  const habitsEl = document.getElementById('habitsInput');
+  const savedHabits = localStorage.getItem('littleSky.habits');
+  if(habitsEl && savedHabits) habitsEl.value = savedHabits;
+  if(savedHabits){
+    const lines = savedHabits.split('\n').filter(l=>l.trim());
+    const grid = document.querySelector('.habits');
+    if(grid && lines.length){
+      grid.innerHTML = lines.map((line,i)=>{
+        const tags = ['昵称','口头禅','小动作','小默契','我们之间','❤'];
+        return `<div class="habit-card"><div class="habit-icon">${i%2?'☁':'♡'}</div><div class="habit-text">${line.trim()}</div><div class="habit-tag">${tags[i%tags.length]}</div></div>`;
+      }).join('');
+    }
+  }
+  // 愿望清单
+  const bucketEl = document.getElementById('bucketInput');
+  const savedBucket = localStorage.getItem('littleSky.bucketItems');
+  if(bucketEl && savedBucket) bucketEl.value = savedBucket;
+  if(savedBucket){
+    const lines = savedBucket.split('\n').filter(l=>l.trim());
+    const list = document.getElementById('bucketList');
+    if(list && lines.length){
+      const done = JSON.parse(localStorage.getItem('littleSky.bucketDone') || '[]');
+      list.innerHTML = lines.map((line,i)=>`<label class="bucket-item ${done.includes(i)?'done':''}"><input type="checkbox" ${done.includes(i)?'checked':''}><span class="bucket-text">${line.trim()}</span></label>`).join('');
+    }
+  }
+  // 每月一封信
+  const lettersEl = document.getElementById('lettersInput');
+  const savedLetters = localStorage.getItem('littleSky.letters');
+  if(lettersEl && savedLetters) lettersEl.value = savedLetters;
+  if(savedLetters){
+    const parts = savedLetters.split('---').filter(l=>l.trim());
+    const container = document.getElementById('monthlyLetters');
+    if(container && parts.length){
+      container.innerHTML = parts.map((text,i)=>{
+        const t = text.trim();
+        const monthNames = ['第一个月','第二个月','第三个月','第四个月','第五个月','第六个月','第七个月','第八个月','第九个月','第十个月','第十一个月','第十二个月'];
+        const preview = t.slice(0,40) + '……';
+        return `<div class="monthly-letter"><div class="ml-month">${monthNames[i]||'第'+(i+1)+'个月'}</div><div class="ml-preview">${preview}</div><div class="ml-full">${t}</div></div>`;
+      }).join('');
+      container.querySelectorAll('.monthly-letter').forEach(l=>l.addEventListener('click',()=>l.classList.toggle('open')));
+    }
+  }
+})();
+
+/* ===== 我们的歌单（升级版） ===== */
+(function initPlaylist(){
+  const KEY = 'littleSky.playlist';
+  const list = document.getElementById('playlist');
+  if(!list) return;
+  function getSongs(){ try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; } }
+  function saveSongs(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+  function render(){
+    const songs = getSongs();
+    if(!songs.length){ list.innerHTML = '<div class="song-empty">还没有歌<br><br>去「管理 ♡」里添加第一首吧</div>'; return; }
+    list.innerHTML = songs.map((s,i)=>`
+      <div class="song-card" data-i="${i}">
+        <button class="song-del" data-del="${i}">×</button>
+        <div class="song-cover">
+          ${s.cover ? `<img src="${s.cover}" alt="">` : '♪'}
+        </div>
+        <h4 class="song-title">${s.name}</h4>
+        <div class="song-artist">${s.artist||''}</div>
+        <div class="song-note">${s.story||''}</div>
+      </div>`).join('');
+    list.querySelectorAll('.song-del').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const arr = getSongs(); arr.splice(+btn.dataset.del,1); saveSongs(arr); render();
+      });
+    });
+  }
+  const addBtn = document.getElementById('songAddButton');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('songName').value.trim();
+      const artist = document.getElementById('songArtist').value.trim();
+      const story = document.getElementById('songStory').value.trim();
+      if(!name){ addBtn.textContent='请填歌名'; setTimeout(()=>addBtn.textContent='添加歌曲',1200); return; }
+      const arr = getSongs();
+      const fileInput = document.getElementById('songCover');
+      const finish = (cover)=>{
+        arr.push({ name, artist, story, cover: cover||'' });
+        saveSongs(arr);
+        ['songName','songArtist','songStory'].forEach(id=>document.getElementById(id).value='');
+        addBtn.textContent='已添加 ✓'; setTimeout(()=>addBtn.textContent='添加歌曲',1500);
+        render();
+      };
+      const file = fileInput.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const img = new Image();
+          img.onload = ()=>{
+            const c = document.createElement('canvas');
+            const s = Math.min(1, 400/img.width);
+            c.width = img.width*s; c.height = img.height*s;
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            finish(c.toDataURL('image/jpeg',.8));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else finish('');
+    });
+  }
+  render();
+})();
+
+/* ===== 新板块：保存按钮 ===== */
+['saveHabitsButton|habitsInput|littleSky.habits','saveBucketButton|bucketInput|littleSky.bucketItems','saveLettersButton|lettersInput|littleSky.letters'].forEach(cfg=>{
+  const [btnId,inputId,key] = cfg.split('|');
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  if(btn && input) btn.addEventListener('click',()=>{
+    localStorage.setItem(key, input.value);
+    btn.textContent = 'Saved ✓';
+    setTimeout(()=>{ btn.textContent='保存'; location.reload(); }, 800);
+  });
+});
+
 /* ===== 时间线 4 个节点照片：his / her frames 同款逻辑 ===== */
 (function initMomentPhotos(){
   function compress(file, cb){
@@ -948,6 +1647,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
 (function initAlbum(){
   const ALBUM_KEY = 'littleSky.albumPhotos';
   const body = document.getElementById('albumBody');
+  if(!body) return;
   const SEASONS = [
     {name:'Spring', months:[2,3,4]},
     {name:'Summer', months:[5,6,7]},
@@ -1075,6 +1775,799 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
   });
   render();
 })();
+
+/* ===== P3: 日常碎片照片墙 ===== */
+(function initScrapbook(){
+  const KEY = 'littleSky.scrapPhotos';
+  const wall = document.getElementById('scrapbook');
+  const input = document.getElementById('scrapPhotoInput');
+  const addBtn = document.getElementById('scrapAddButton');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+  function getPhotos(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+  function savePhotos(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+  function render(){
+    const photos = getPhotos();
+    if(!photos.length){
+      wall.innerHTML = '<div class="scrap-empty">还没有碎片照片<br><br>去「管理 ♡」里上传吧</div>';
+      return;
+    }
+    wall.innerHTML = photos.map((p,i)=>`
+      <div class="scrap-item" data-i="${i}">
+        <button class="scrap-del" data-del="${i}">×</button>
+        <img src="${p.src}" alt="碎片 ${i+1}">
+        <div class="scrap-cap" contenteditable="true" data-cap="${i}">${p.caption||''}</div>
+        <div class="scrap-date">${p.date||''}</div>
+      </div>`).join('');
+    // 点击放大
+    wall.querySelectorAll('.scrap-item').forEach(item=>{
+      item.addEventListener('click', (e)=>{
+        if(e.target.classList.contains('scrap-del') || e.target.hasAttribute('contenteditable')) return;
+        const img = item.querySelector('img');
+        if(img){ lightboxImg.src = img.src; lightbox.classList.add('open'); }
+      });
+    });
+    // 删除
+    wall.querySelectorAll('.scrap-del').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const i = +btn.dataset.del;
+        const arr = getPhotos(); arr.splice(i,1); savePhotos(arr); render();
+      });
+    });
+    // 保存文字
+    wall.querySelectorAll('[contenteditable]').forEach(el=>{
+      el.addEventListener('blur', ()=>{
+        const i = +el.dataset.cap;
+        const arr = getPhotos();
+        if(arr[i]){ arr[i].caption = el.textContent; savePhotos(arr); }
+      });
+    });
+  }
+  if(lightboxClose) lightboxClose.addEventListener('click', ()=> lightbox.classList.remove('open'));
+  if(lightbox) lightbox.addEventListener('click', (e)=>{ if(e.target === lightbox) lightbox.classList.remove('open'); });
+  if(addBtn && input) addBtn.addEventListener('click', ()=>{
+    const files = Array.from(input.files||[]);
+    if(!files.length){ addBtn.textContent = '请先选照片'; setTimeout(()=>addBtn.textContent='添加到碎片墙',1200); return; }
+    let done = 0;
+    const arr = getPhotos();
+    files.forEach(file=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        // 压缩
+        const img = new Image();
+        img.onload = ()=>{
+          const canvas = document.createElement('canvas');
+          const maxW = 600;
+          const scale = Math.min(1, maxW / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          arr.push({ src: canvas.toDataURL('image/jpeg', .8), caption: '', date: new Date().toISOString().slice(0,10) });
+          done++;
+          if(done === files.length){ savePhotos(arr); render(); input.value=''; addBtn.textContent='已添加 ✓'; setTimeout(()=>addBtn.textContent='添加到碎片墙',1500); }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+  render();
+})();
+
+/* ===== Letters to You ===== */
+(function initLetters(){
+  const KEY = 'littleSky.letters';
+  const grid = document.getElementById('lettersGrid');
+  const modal = document.getElementById('letterModal');
+  const closeBtn = document.getElementById('letterClose');
+  const dateEl = document.getElementById('lpDate');
+  const bodyEl = document.getElementById('lpBody');
+  const signEl = document.getElementById('lpSign');
+  const fromSel = document.getElementById('letterFrom');
+  const unlockInput = document.getElementById('letterUnlockDate');
+  const bodyInput = document.getElementById('letterBody');
+  const addBtn = document.getElementById('letterAddButton');
+
+  function getLetters(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+  function saveLetters(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+  function isUnlocked(letter){
+    if(!letter.unlockDate) return true;
+    return new Date(letter.unlockDate) <= new Date();
+  }
+  function render(){
+    const letters = getLetters();
+    if(!letters.length){
+      grid.innerHTML = '<div class="letters-empty">还没有信<br><br>去「管理 ♡」里写第一封吧</div>';
+      return;
+    }
+    grid.innerHTML = letters.map((l,i)=>{
+      const unlocked = isUnlocked(l);
+      const label = unlocked ? (l.body ? l.body.slice(0,30) + (l.body.length>30?'...':'') : '一封未命名的信') : '🔒 ' + l.unlockDate + ' 解锁';
+      return `<div class="envelope ${unlocked?'':'locked'}" data-i="${i}">
+        <div class="env-from">${l.from}</div>
+        ${unlocked?'':'<div class="env-lock">🔒</div>'}
+        <div class="env-label">${label}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.envelope').forEach(env=>{
+      env.addEventListener('click', ()=>{
+        const i = +env.dataset.i;
+        const l = getLetters()[i];
+        if(!l || !isUnlocked(l)) return;
+        dateEl.textContent = (l.unlockDate || l.createdAt) + ' · ' + l.from;
+        bodyEl.textContent = l.body;
+        signEl.textContent = '—— ' + l.from;
+        modal.classList.add('open');
+      });
+    });
+  }
+  if(closeBtn) closeBtn.addEventListener('click', ()=> modal.classList.remove('open'));
+  if(modal) modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('open'); });
+  if(addBtn && bodyInput) addBtn.addEventListener('click', ()=>{
+    const body = bodyInput.value.trim();
+    if(!body){ addBtn.textContent='请先写内容'; setTimeout(()=>addBtn.textContent='寄出这封信',1200); return; }
+    const arr = getLetters();
+    arr.push({
+      from: fromSel.value,
+      body: body,
+      unlockDate: unlockInput.value || '',
+      createdAt: new Date().toISOString().slice(0,10)
+    });
+    saveLetters(arr);
+    bodyInput.value=''; unlockInput.value='';
+    render();
+    addBtn.textContent='已寄出 ✓'; setTimeout(()=>addBtn.textContent='寄出这封信',1500);
+  });
+  render();
+})();
+
+/* ===== 每日惊喜 ===== */
+(function initSurprise(){
+  const KEY = 'littleSky.surprises';
+  const card = document.getElementById('surpriseCard');
+  if(!card) return;
+  const label = document.getElementById('sbLabel');
+  const content = document.getElementById('sbContent');
+  const dateEl = document.getElementById('sbDate');
+  function getSurprises(){
+    const raw = localStorage.getItem(KEY);
+    if(raw) return raw.split('\n').map(s=>s.trim()).filter(Boolean);
+    return ['今天也要想我哦～','记得喝杯水','我们的故事还在继续','去翻一翻去年的照片','一起看部电影吧','你今天也很好看','抱一下身边的人'];
+  }
+  function todayIndex(){ return Math.floor(Date.now() / 86400000); }
+  function showSurprise(){
+    const surprises = getSurprises();
+    const idx = todayIndex() % surprises.length;
+    label.textContent = 'Today\'s Surprise';
+    content.textContent = surprises[idx];
+    dateEl.textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric'});
+  }
+  showSurprise();
+  card.addEventListener('click', ()=> card.classList.add('open'));
+  const saveBtn = document.getElementById('saveSurpriseButton');
+  const input = document.getElementById('surpriseInput');
+  if(input){ const saved = localStorage.getItem(KEY); if(saved) input.value = saved; else input.value = ['今天也要想我哦～','记得喝杯水','我们的故事还在继续'].join('\n'); }
+  if(saveBtn && input) saveBtn.addEventListener('click', ()=>{
+    localStorage.setItem(KEY, input.value); showSurprise();
+    saveBtn.textContent = '已保存 ✓'; setTimeout(()=>saveBtn.textContent='保存惊喜',1500);
+  });
+})();
+
+/* ===== 时光胶囊 ===== */
+(function initCapsule(){
+  const KEY = 'littleSky.capsules';
+  const grid = document.getElementById('capsuleGrid');
+  if(!grid) return;
+  function getCapsules(){ try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; } }
+  function saveCapsules(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+  function isUnlocked(c){ return !c.unlockDate || new Date(c.unlockDate) <= new Date(); }
+  function daysLeft(c){ if(isUnlocked(c)) return 0; return Math.ceil((new Date(c.unlockDate) - new Date()) / 86400000); }
+  function render(){
+    const caps = getCapsules();
+    if(!caps.length){ grid.innerHTML = '<div class="capsule-empty">还没有胶囊<br><br>去「管理 ♡」里封第一颗吧</div>'; return; }
+    grid.innerHTML = caps.map((c,i)=>{
+      const open = isUnlocked(c);
+      return `<div class="capsule-card ${open?'':'locked'}">
+        <div class="capsule-icon">${open?'📬':'🔒'}</div>
+        <h3>${c.title}</h3>
+        <div class="cap-date">${c.createdAt}${c.unlockDate ? ' · 开启于 ' + c.unlockDate : ''}</div>
+        ${open ? `<div class="cap-body">${c.body||''}</div>${c.photo ? `<img src="${c.photo}" alt="">` : ''}` : `<div class="cap-lock">还有 ${daysLeft(c)} 天开启</div>`}
+      </div>`;
+    }).join('');
+  }
+  const addBtn = document.getElementById('capAddButton');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      const title = document.getElementById('capTitle').value.trim();
+      const body = document.getElementById('capBody').value.trim();
+      const unlockDate = document.getElementById('capUnlockDate').value;
+      if(!title || !body){ addBtn.textContent='请填标题和内容'; setTimeout(()=>addBtn.textContent='封装胶囊',1200); return; }
+      const arr = getCapsules();
+      const fileInput = document.getElementById('capPhoto');
+      const finish = (photo)=>{
+        arr.push({ title, body, unlockDate, photo: photo||'', createdAt: new Date().toISOString().slice(0,10) });
+        saveCapsules(arr);
+        ['capTitle','capBody','capUnlockDate'].forEach(id=>document.getElementById(id).value='');
+        addBtn.textContent='已封装 ✓'; setTimeout(()=>addBtn.textContent='封装胶囊',1500);
+        render();
+      };
+      const file = fileInput.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const img = new Image();
+          img.onload = ()=>{
+            const c = document.createElement('canvas');
+            const s = Math.min(1, 500/img.width);
+            c.width = img.width*s; c.height = img.height*s;
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            finish(c.toDataURL('image/jpeg',.8));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else finish('');
+    });
+  }
+  render();
+})();
+
+/* ===== 我们的小宇宙 ===== */
+(function initUniverse(){
+  const KEY = 'littleSky.stars';
+  const MOON_KEY = 'littleSky.moonMessage';
+  const starsBox = document.getElementById('universeStars');
+  if(!starsBox) return;
+  const modal = document.getElementById('universeModal');
+  const closeBtn = document.getElementById('universeClose');
+  const titleEl = document.getElementById('usTitle');
+  const dateEl = document.getElementById('usDate');
+  const bodyEl = document.getElementById('usBody');
+
+  function getStars(){ try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; } }
+  function saveStars(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+
+  // 生成背景小星星
+  const sf = document.getElementById('starfield');
+  if(sf){
+    let dots = '';
+    for(let i=0;i<80;i++){
+      const x = Math.random()*100, y = Math.random()*100;
+      const delay = (Math.random()*3).toFixed(1);
+      dots += `<div class="star-dot" style="left:${x}%;top:${y}%;animation-delay:${delay}s"></div>`;
+    }
+    sf.innerHTML = dots;
+  }
+
+  function render(){
+    const stars = getStars();
+    starsBox.innerHTML = stars.map((s,i)=>`
+      <div class="ustar" data-i="${i}" style="left:${s.x}%;top:${s.y}%">
+        <span class="ustar-label">${s.name}</span>
+      </div>`).join('');
+    starsBox.querySelectorAll('.ustar').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const s = getStars()[+el.dataset.i];
+        if(!s) return;
+        titleEl.textContent = s.name;
+        dateEl.textContent = s.date || '';
+        bodyEl.textContent = s.story || '';
+        modal.classList.add('open');
+      });
+    });
+  }
+  if(closeBtn) closeBtn.addEventListener('click', ()=> modal.classList.remove('open'));
+  if(modal) modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open'); });
+
+  // 月亮悄悄话
+  const moon = document.getElementById('moon');
+  if(moon) moon.addEventListener('click', ()=>{
+    const msg = localStorage.getItem(MOON_KEY) || '你是我藏在星星里的浪漫。';
+    titleEl.textContent = '☾ 月亮说';
+    dateEl.textContent = '';
+    bodyEl.textContent = msg;
+    modal.classList.add('open');
+  });
+
+  // Manage 添加星星
+  const addBtn = document.getElementById('starAddButton');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('starName').value.trim();
+      const x = parseFloat(document.getElementById('starX').value);
+      const y = parseFloat(document.getElementById('starY').value);
+      if(!name || isNaN(x) || isNaN(y)){ addBtn.textContent='请填名称和位置'; setTimeout(()=>addBtn.textContent='点亮星星',1200); return; }
+      const arr = getStars();
+      arr.push({
+        name, date: document.getElementById('starDate').value,
+        x: Math.min(95, Math.max(5, x)), y: Math.min(90, Math.max(10, y)),
+        story: document.getElementById('starStory').value
+      });
+      saveStars(arr);
+      ['starName','starX','starY','starDate','starStory'].forEach(id=>document.getElementById(id).value='');
+      render();
+      addBtn.textContent='已点亮 ✓'; setTimeout(()=>addBtn.textContent='点亮星星',1500);
+    });
+  }
+  render();
+})();
+
+/* ===== 我们去过的地方（Leaflet 地图） ===== */
+(function initPlaces(){
+  const KEY = 'littleSky.places';
+  const list = document.getElementById('placesList');
+  if(!list) return;
+  const mapEl = document.getElementById('travelMap');
+  function getPlaces(){ try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; } }
+  function savePlaces(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+  let map = null;
+  if(window.L && mapEl){
+    map = L.map(mapEl).setView([30.2741, 120.1551], 5);
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', { attribution: '© 高德地图', maxZoom: 18, subdomains: '1234' }).addTo(map);
+  }
+  function render(){
+    const places = getPlaces();
+    if(map){ map.eachLayer(l=>{ if(l instanceof L.Marker) map.removeLayer(l); }); }
+    places.forEach(p=>{
+      if(map && p.lat && p.lng){
+        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        marker.bindPopup(`<h4>${p.name}</h4><p>${p.date||''}</p>${p.story?'<p>'+p.story+'</p>':''}${p.photo?'<img src="'+p.photo+'" style="width:120px;border-radius:6px;margin-top:6px">':''}`);
+      }
+    });
+    if(!places.length){ list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">还没有去过的地方<br><br>去「管理 ♡」里添加第一个吧</div>'; return; }
+    list.innerHTML = places.map((p,i)=>`
+      <div class="place-card">
+        <button class="pc-del" data-del="${i}">×</button>
+        ${p.photo ? `<img class="pc-photo" src="${p.photo}" alt="">` : ''}
+        <h4>${p.name}</h4>
+        <div class="pc-date">${p.date||''} · ${p.lat?.toFixed(2)}, ${p.lng?.toFixed(2)}</div>
+        ${p.story ? `<div class="pc-story">${p.story}</div>` : ''}
+      </div>`).join('');
+    list.querySelectorAll('.pc-del').forEach(btn=>{ btn.addEventListener('click', ()=>{ const arr = getPlaces(); arr.splice(+btn.dataset.del,1); savePlaces(arr); render(); }); });
+  }
+  const addBtn = document.getElementById('placeAddButton');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('placeName').value.trim();
+      const lat = parseFloat(document.getElementById('placeLat').value);
+      const lng = parseFloat(document.getElementById('placeLng').value);
+      if(!name || isNaN(lat) || isNaN(lng)){ addBtn.textContent='请填名称和坐标'; setTimeout(()=>addBtn.textContent='添加地点',1200); return; }
+      const arr = getPlaces();
+      const fileInput = document.getElementById('placePhoto');
+      const finish = (photo)=>{
+        arr.push({ name, lat, lng, date: document.getElementById('placeDate').value, story: document.getElementById('placeStory').value, photo: photo||'' });
+        savePlaces(arr);
+        ['placeName','placeLat','placeLng','placeDate','placeStory'].forEach(id=>document.getElementById(id).value='');
+        addBtn.textContent='已添加 ✓'; setTimeout(()=>addBtn.textContent='添加地点',1500);
+        render();
+        if(map) map.setView([lat,lng], 10);
+      };
+      const file = fileInput.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const img = new Image();
+          img.onload = ()=>{
+            const c = document.createElement('canvas');
+            const s = Math.min(1, 500/img.width);
+            c.width = img.width*s; c.height = img.height*s;
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            finish(c.toDataURL('image/jpeg',.8));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else finish('');
+    });
+  }
+  render();
+})();
+
+/* ===== 今日心情 ===== */
+(function initMood(){
+  const KEY = 'littleSky.moods';
+  const MOODS = [
+    {key:'happy', emoji:'☀️', label:'开心'},
+    {key:'peaceful', emoji:'⛅', label:'平静'},
+    {key:'missing', emoji:'🌧️', label:'想念'},
+    {key:'tired', emoji:'🌥️', label:'疲惫'},
+    {key:'sad', emoji:'🌧️', label:'难过'},
+    {key:'excited', emoji:'🌈', label:'兴奋'},
+    {key:'loved', emoji:'💖', label:'被爱'},
+  ];
+  function getMoods(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
+  function saveMoods(obj){ localStorage.setItem(KEY, JSON.stringify(obj)); }
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+  const selected = { him: null, her: null };
+  const photos = { him: null, her: null };
+  document.querySelectorAll('.mood-options').forEach(box=>{
+    const who = box.dataset.who;
+    box.innerHTML = MOODS.map(m=>`<div class="mood-opt" data-who="${who}" data-mood="${m.key}"><span>${m.emoji}</span><span class="mood-label">${m.label}</span></div>`).join('');
+    box.querySelectorAll('.mood-opt').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        selected[who] = opt.dataset.mood;
+        box.querySelectorAll('.mood-opt').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+      });
+    });
+  });
+  const today = todayKey();
+  document.getElementById('moodDateHim').textContent = today;
+  document.getElementById('moodDateHer').textContent = today;
+  const moods = getMoods();
+  if(moods[today]){
+    if(moods[today].him){
+      selected.him = moods[today].him.mood;
+      document.querySelector(`.mood-opt[data-who="him"][data-mood="${selected.him}"]`)?.classList.add('selected');
+      document.getElementById('moodTextHim').value = moods[today].him.text || '';
+      if(moods[today].him.photo){ photos.him = moods[today].him.photo; document.getElementById('moodPhotoHim').innerHTML = `<img src="${photos.him}" alt="">`; }
+    }
+    if(moods[today].her){
+      selected.her = moods[today].her.mood;
+      document.querySelector(`.mood-opt[data-who="her"][data-mood="${selected.her}"]`)?.classList.add('selected');
+      document.getElementById('moodTextHer').value = moods[today].her.text || '';
+      if(moods[today].her.photo){ photos.her = moods[today].her.photo; document.getElementById('moodPhotoHer').innerHTML = `<img src="${photos.her}" alt="">`; }
+    }
+  }
+  ['Him','Her'].forEach(who=>{
+    const slot = document.getElementById('moodPhoto'+who);
+    slot.addEventListener('click', ()=>{
+      const input = document.createElement('input');
+      input.type='file'; input.accept='image/*';
+      input.onchange = ()=>{
+        const file = input.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const img = new Image();
+          img.onload = ()=>{
+            const c = document.createElement('canvas');
+            const s = Math.min(1, 400/img.width);
+            c.width = img.width*s; c.height = img.height*s;
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            const k = who.toLowerCase();
+            photos[k] = c.toDataURL('image/jpeg',.8);
+            slot.innerHTML = `<img src="${photos[k]}" alt="">`;
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    });
+  });
+  document.querySelectorAll('.mood-save').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const who = btn.dataset.who;
+      if(!selected[who]){ btn.textContent='先选个心情'; setTimeout(()=>btn.textContent='保存心情',1200); return; }
+      const all = getMoods();
+      if(!all[today]) all[today] = {};
+      all[today][who] = { mood: selected[who], text: document.getElementById('moodText'+(who==='him'?'Him':'Her')).value, photo: photos[who] || '' };
+      saveMoods(all);
+      btn.textContent='已保存 ✓'; setTimeout(()=>btn.textContent='保存心情',1500);
+      renderHistory();
+    });
+  });
+  function renderHistory(){
+    const all = getMoods();
+    const dates = Object.keys(all).sort().reverse().slice(0,7);
+    const list = document.getElementById('moodHistory');
+    if(!dates.length){ list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">还没有心情记录</div>'; return; }
+    list.innerHTML = dates.map(d=>{
+      const entry = all[d];
+      const items = [];
+      ['him','her'].forEach(who=>{
+        if(entry[who]){
+          const m = MOODS.find(x=>x.key===entry[who].mood);
+          items.push(`<span style="display:flex;align-items:center;gap:6px">${m?.emoji||''}<span style="color:var(--muted);font-size:11px">${who==='him'?'Him':'Her'}</span>${entry[who].text?'<span style="color:var(--ink)">'+entry[who].text+'</span>':''}${entry[who].photo?'<img src="'+entry[who].photo+'" style="width:30px;height:30px;border-radius:4px;object-fit:cover">':''}</span>`);
+        }
+      });
+      return `<div class="mood-h-item"><span class="h-date">${d}</span><div style="display:flex;gap:16px;flex-wrap:wrap">${items.join('')}</div></div>`;
+    }).join('');
+  }
+  renderHistory();
+})();
+
+/* ===== 专属纪念日历 ===== */
+(function initCalendar(){
+  const SPECIAL_KEY = 'littleSky.calSpecial';
+  const NOTES_KEY = 'littleSky.calNotes';
+  const grid = document.getElementById('calGrid');
+  if(!grid) return;
+  const title = document.getElementById('calTitle');
+  const prevBtn = document.getElementById('calPrev');
+  const nextBtn = document.getElementById('calNextBtn');
+  const modal = document.getElementById('calModal');
+  const cmDate = document.getElementById('cmDate');
+  const cmLabel = document.getElementById('cmLabel');
+  const cmNote = document.getElementById('cmNote');
+  const cmClose = document.getElementById('cmClose');
+  const cmSave = document.getElementById('cmSave');
+  const nextEl = document.getElementById('calNext');
+
+  let viewYear = new Date().getFullYear();
+  let viewMonth = new Date().getMonth(); // 0-indexed
+  let selectedDate = null;
+
+  function getSpecial(){
+    const raw = localStorage.getItem(SPECIAL_KEY);
+    if(raw) return JSON.parse(raw);
+    return [
+      {date:'06-01', label:'恋爱纪念日'},
+      {date:'10-01', label:'相识纪念日'},
+    ];
+  }
+  function getNotes(){ try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch(e){ return {}; } }
+
+  function render(){
+    const special = getSpecial();
+    const notes = getNotes();
+    const today = new Date();
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const lastDay = new Date(viewYear, viewMonth+1, 0);
+    const startDow = firstDay.getDay(); // 0=Sun
+    const daysInMonth = lastDay.getDate();
+    const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    title.textContent = viewYear + '年 ' + monthNames[viewMonth];
+
+    let html = ['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+    // 上月填充
+    for(let i=startDow-1; i>=0; i--){
+      html += `<div class="cal-day other">${prevMonthDays-i}</div>`;
+    }
+    // 当月
+    for(let d=1; d<=daysInMonth; d++){
+      const mm = String(viewMonth+1).padStart(2,'0');
+      const dd = String(d).padStart(2,'0');
+      const key = viewYear + '-' + mm + '-' + dd;
+      const isToday = d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+      const specialMatch = special.find(s=>s.date === mm + '-' + dd);
+      const hasNote = notes[key];
+      let cls = 'cal-day';
+      if(isToday) cls += ' today';
+      if(specialMatch) cls += ' special';
+      html += `<div class="${cls}" data-date="${key}">${d}${hasNote||specialMatch?'<div class="cal-dot"></div>':''}</div>`;
+    }
+    // 下月填充补齐到7的倍数
+    const totalCells = startDow + daysInMonth;
+    const remaining = (7 - totalCells % 7) % 7;
+    for(let d=1; d<=remaining; d++){
+      html += `<div class="cal-day other">${d}</div>`;
+    }
+    grid.innerHTML = html;
+
+    // 点击日期
+    grid.querySelectorAll('.cal-day[data-date]').forEach(cell=>{
+      cell.addEventListener('click', ()=>{
+        selectedDate = cell.dataset.date;
+        const mm = selectedDate.slice(5);
+        const specialMatch = special.find(s=>s.date === mm);
+        cmDate.textContent = selectedDate;
+        if(specialMatch){ cmLabel.textContent = '♡ ' + specialMatch.label; cmLabel.style.display='block'; }
+        else cmLabel.style.display='none';
+        cmNote.value = notes[selectedDate] || '';
+        modal.classList.add('open');
+      });
+    });
+
+    // 下一个纪念日倒计时
+    let nextText = '';
+    const now = new Date();
+    let closest = null;
+    let closestDiff = Infinity;
+    special.forEach(s=>{
+      const [mm,dd] = s.date.split('-').map(Number);
+      let y = now.getFullYear();
+      let d = new Date(y, mm-1, dd);
+      if(d < now) d = new Date(y+1, mm-1, dd);
+      const diff = Math.ceil((d - now) / 86400000);
+      if(diff < closestDiff){ closestDiff = diff; closest = s.label; }
+    });
+    if(closest) nextText = `下一个纪念日：<strong>${closest}</strong> · 还有 <strong>${closestDiff}</strong> 天`;
+    nextEl.innerHTML = nextText;
+  }
+
+  if(prevBtn) prevBtn.addEventListener('click', ()=>{ viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} render(); });
+  if(nextBtn) nextBtn.addEventListener('click', ()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} render(); });
+  if(cmClose) cmClose.addEventListener('click', ()=> modal.classList.remove('open'));
+  if(modal) modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open'); });
+  if(cmSave) cmSave.addEventListener('click', ()=>{
+    const notes = getNotes();
+    notes[selectedDate] = cmNote.value;
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    modal.classList.remove('open');
+    render();
+  });
+
+  // Manage 保存特殊日期
+  const specialInput = document.getElementById('calSpecialInput');
+  const specialSave = document.getElementById('calSpecialSave');
+  if(specialInput){
+    const saved = localStorage.getItem(SPECIAL_KEY);
+    if(saved) specialInput.value = JSON.parse(saved).map(s=>s.date+' '+s.label).join('\n');
+    else specialInput.value = '06-01 恋爱纪念日\n10-01 相识纪念日';
+  }
+  if(specialSave && specialInput) specialSave.addEventListener('click', ()=>{
+    const lines = specialInput.value.split('\n').map(l=>l.trim()).filter(Boolean);
+    const arr = lines.map(l=>{
+      const parts = l.split(' ');
+      return { date: parts[0], label: parts.slice(1).join(' ') };
+    }).filter(s=>/^\d{2}-\d{2}$/.test(s.date));
+    localStorage.setItem(SPECIAL_KEY, JSON.stringify(arr));
+    render();
+    specialSave.textContent = '已保存 ✓'; setTimeout(()=>specialSave.textContent='保存日期',1500);
+  });
+
+  render();
+})();
+
+/* ===== 倒计时：下次见面 / 生日 / 旅行 ===== */
+(function initCountdowns(){
+  const meetings = localStorage.getItem('littleSky.meetingDate') || '';
+  const birthday = localStorage.getItem('littleSky.birthdayDate') || '';
+  const trip = localStorage.getItem('littleSky.tripDate') || '';
+  function daysTo(dateStr){
+    if(!dateStr) return null;
+    const target = new Date(dateStr+'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    return Math.ceil((target - today) / 86400000);
+  }
+  function setNum(id, n){
+    const el = document.getElementById(id);
+    if(el) el.textContent = n !== null ? n : '—';
+  }
+  setNum('cdMeeting', daysTo(meetings));
+  setNum('cdBirthday', daysTo(birthday));
+  setNum('cdTrip', daysTo(trip));
+  const mEl = document.getElementById('cdMeetingDate');
+  if(mEl) mEl.textContent = meetings || '去管理里设置日期';
+  const bEl = document.getElementById('cdBirthdayDate');
+  if(bEl) bEl.textContent = birthday || '去管理里设置日期';
+  const tEl = document.getElementById('cdTripDate');
+  if(tEl) tEl.textContent = trip || '去管理里设置日期';
+})();
+
+/* ===== 愿望清单（升级版）：卡片 + 进度 + 完成照片 ===== */
+(function initBucketList(){
+  const ITEMS_KEY = 'littleSky.bucketItems';
+  const DONE_KEY = 'littleSky.bucketDone';
+  const PHOTOS_KEY = 'littleSky.bucketPhotos';
+  const grid = document.getElementById('bucketGrid');
+  if(!grid) return;
+
+  function getItems(){
+    const raw = localStorage.getItem(ITEMS_KEY);
+    if(raw) return raw.split('\n').map(s=>s.trim()).filter(Boolean);
+    return ['一起看一次日出','养一只猫','去海边住一周','一起学做一道菜','坐一次长途火车','看一场烟花'];
+  }
+  function getDone(){ try { return JSON.parse(localStorage.getItem(DONE_KEY) || '{}'); } catch(e){ return {}; } }
+  function getPhotos(){ try { return JSON.parse(localStorage.getItem(PHOTOS_KEY) || '{}'); } catch(e){ return {}; } }
+
+  function render(){
+    const items = getItems();
+    const done = getDone();
+    const photos = getPhotos();
+    const doneCount = items.filter((_,i)=>done[i]).length;
+
+    // 进度条
+    const fill = document.getElementById('bucketFill');
+    const doneEl = document.getElementById('bucketDoneCount');
+    const totalEl = document.getElementById('bucketTotalCount');
+    if(fill) fill.style.width = items.length ? (doneCount/items.length*100) + '%' : '0%';
+    if(doneEl) doneEl.textContent = doneCount;
+    if(totalEl) totalEl.textContent = items.length;
+
+    if(!items.length){
+      grid.innerHTML = '<div class="bucket-empty">还没有愿望<br><br>去「管理 ♡」里添加吧</div>';
+      return;
+    }
+    grid.innerHTML = items.map((item,i)=>{
+      const isDone = done[i];
+      const photo = photos[i] || '';
+      return `<div class="bucket-card ${isDone?'done':''}" data-i="${i}">
+        <div class="bc-check" data-check="${i}">✓</div>
+        <div class="bc-title" contenteditable="true" data-title="${i}">${item}</div>
+        <div class="bc-date">${isDone ? '✓ 已实现 ' + (done[i]) : '待实现'}</div>
+        ${photo ? `<div class="bc-photo has"><img src="${photo}" alt=""></div>` : `<div class="bc-photo" data-photo-slot="${i}"></div>`}
+        <div class="bc-tag">${isDone ? '回忆 ✓' : '愿望 ♡'}</div>
+        <button class="bc-del" data-del="${i}">×</button>
+      </div>`;
+    }).join('');
+
+    // 勾选完成
+    grid.querySelectorAll('.bc-check').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const i = +btn.dataset.check;
+        const d = getDone();
+        if(d[i]) delete d[i];
+        else d[i] = new Date().toISOString().slice(0,10);
+        localStorage.setItem(DONE_KEY, JSON.stringify(d));
+        render();
+      });
+    });
+    // 保存标题
+    grid.querySelectorAll('[data-title]').forEach(el=>{
+      el.addEventListener('blur', ()=>{
+        const i = +el.dataset.title;
+        const items2 = getItems();
+        items2[i] = el.textContent;
+        localStorage.setItem(ITEMS_KEY, items2.join('\n'));
+      });
+    });
+    // 删除
+    grid.querySelectorAll('.bc-del').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const i = +btn.dataset.del;
+        const items2 = getItems();
+        items2.splice(i,1);
+        localStorage.setItem(ITEMS_KEY, items2.join('\n'));
+        render();
+      });
+    });
+    // 点击上传完成照片
+    grid.querySelectorAll('[data-photo-slot]').forEach(slot=>{
+      slot.addEventListener('click', ()=>{
+        const i = +slot.dataset.photoSlot;
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = ()=>{
+          const file = input.files[0]; if(!file) return;
+          const reader = new FileReader();
+          reader.onload = ()=>{
+            const img = new Image();
+            img.onload = ()=>{
+              const c = document.createElement('canvas');
+              const maxW = 500;
+              const s = Math.min(1, maxW/img.width);
+              c.width = img.width*s; c.height = img.height*s;
+              c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+              const p = getPhotos();
+              p[i] = c.toDataURL('image/jpeg',.8);
+              localStorage.setItem(PHOTOS_KEY, JSON.stringify(p));
+              render();
+            };
+            img.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        };
+        input.click();
+      });
+    });
+  }
+  render();
+})();
+
+/* ===== 每月一封信：点击展开/收起 ===== */
+document.querySelectorAll('.monthly-letter').forEach(letter=>{
+  letter.addEventListener('click', ()=> letter.classList.toggle('open'));
+});
+
+/* ===== GSAP 首页入场动画 ===== */
+if(window.gsap && window.ScrollTrigger){
+  gsap.registerPlugin(ScrollTrigger);
+  gsap.from('.hero .eyebrow', { opacity:0, y:20, duration:1, delay:.3, ease:'power2.out' });
+  gsap.from('.hero h1', { opacity:0, y:30, duration:1.2, delay:.5, ease:'power3.out' });
+  gsap.from('.hero-sub', { opacity:0, y:20, duration:1, delay:.8, ease:'power2.out' });
+  gsap.from('.enter-btn', { opacity:0, y:15, duration:.8, delay:1.1, ease:'power2.out' });
+  gsap.from('.days-together', { opacity:0, scale:.9, duration:.9, delay:1.3, ease:'back.out(1.5)' });
+  gsap.from('.scrollhint', { opacity:0, duration:1, delay:1.8 });
+  // 云朵视差
+  gsap.to('.cloud-1', { y:40, ease:'none', scrollTrigger:{ trigger:'.hero', start:'top top', end:'bottom top', scrub:1 } });
+  gsap.to('.cloud-2', { y:60, ease:'none', scrollTrigger:{ trigger:'.hero', start:'top top', end:'bottom top', scrub:1 } });
+  // 板块标题淡入
+  document.querySelectorAll('.section-head').forEach(head=>{
+    gsap.from(head, {
+      opacity:0, y:24, duration:.8, ease:'power2.out',
+      scrollTrigger:{ trigger:head, start:'top 85%', once:true }
+    });
+  });
+}
 
 /* ===== 全站文字可编辑：点哪里改哪里，自动存浏览器 ===== */
 (function initGlobalEditable(){
