@@ -63,6 +63,14 @@ button { font: inherit; }
 .cloud-1:before { width:50px; height:50px; top:-25px; left:18px; }
 .cloud-1:after { width:35px; height:35px; top:-15px; right:20px; }
 .cloud-2 { width:90px; height:28px; top:25%; right:12%; animation:drift2 50s linear infinite; }
+/* 治愈小动物装饰 */
+.pet { position:absolute; pointer-events:none; opacity:.85; z-index:1; }
+.pet svg { display:block; }
+.pet-cat { width:60px; }
+.pet-turtle { width:55px; }
+@keyframes petBreathe { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-4px) rotate(2deg)} }
+.pet { animation:petBreathe 4s ease-in-out infinite; }
+.pet-turtle { animation-delay:1s; }
 .cloud-2:before { width:38px; height:38px; top:-18px; left:14px; }
 .cloud-2:after { width:28px; height:28px; top:-12px; right:16px; }
 .cloud-3 { width:150px; height:40px; top:55%; left:5%; animation:drift1 60s linear infinite reverse; opacity:.6; }
@@ -596,6 +604,12 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
       </div>
     </div>
     <div class="scrollhint">Scroll ↓</div>
+    <div class="pet pet-cat" style="bottom:60px;left:8%;opacity:.7">
+      <svg viewBox="0 0 60 50" width="60" height="50"><ellipse cx="30" cy="32" rx="20" ry="14" fill="#F5D5DE"/><path d="M14 24 L10 12 L22 20 Z" fill="#F5D5DE"/><path d="M46 24 L50 12 L38 20 Z" fill="#F5D5DE"/><circle cx="24" cy="30" r="2" fill="#456B89"/><circle cx="36" cy="30" r="2" fill="#456B89"/><path d="M28 36 Q30 38 32 36" stroke="#C76B8F" stroke-width="1.5" fill="none"/><path d="M20 34 L14 33 M20 36 L14 36 M40 34 L46 33 M40 36 L46 36" stroke="#C76B8F" stroke-width="1" opacity=".5"/></svg>
+    </div>
+    <div class="pet pet-turtle" style="bottom:50px;right:10%;opacity:.7">
+      <svg viewBox="0 0 55 40" width="55" height="40"><ellipse cx="27" cy="22" rx="18" ry="12" fill="#A8D8F0"/><ellipse cx="27" cy="20" rx="14" ry="9" fill="#7FB8D9"/><circle cx="44" cy="20" r="6" fill="#A8D8F0"/><circle cx="46" cy="19" r="1.5" fill="#456B89"/><rect x="14" y="30" width="5" height="6" rx="2" fill="#A8D8F0"/><rect x="28" y="31" width="5" height="6" rx="2" fill="#A8D8F0"/><path d="M22 18 L27 22 L22 26 M27 18 L32 22 L27 26" stroke="#FFF" stroke-width="1" fill="none" opacity=".6"/></svg>
+    </div>
   </header>
 
 <!-- ===== 视图：our story ===== -->
@@ -680,7 +694,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </section>
 
     <!-- ===== 愿望清单 ===== -->
-    <section class="section" id="bucketlist">
+    <section class="section" id="bucketlist" style="position:relative">
+      <div class="pet pet-turtle" style="top:20px;right:5%;opacity:.55"><svg viewBox="0 0 55 40" width="40" height="30"><ellipse cx="27" cy="22" rx="18" ry="12" fill="#A8D8F0"/><ellipse cx="27" cy="20" rx="14" ry="9" fill="#7FB8D9"/><circle cx="44" cy="20" r="6" fill="#A8D8F0"/><circle cx="46" cy="19" r="1.5" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">Things we want to do together</div><h2>Bucket List</h2><p>Crossing them off one by one, making them real.</p></div>
       <div class="bucket-progress" id="bucketProgress">
         <div class="bucket-progress-text"><strong id="bucketDoneCount">0</strong> / <span id="bucketTotalCount">0</span> 已实现</div>
@@ -808,7 +823,8 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     </section>
 
     <!-- ===== 每日惊喜 ===== -->
-    <section class="section" id="surprise">
+    <section class="section" id="surprise" style="position:relative">
+      <div class="pet pet-cat" style="top:30px;left:5%;opacity:.5"><svg viewBox="0 0 60 50" width="45" height="38"><ellipse cx="30" cy="32" rx="20" ry="14" fill="#F5D5DE"/><path d="M14 24 L10 12 L22 20 Z" fill="#F5D5DE"/><path d="M46 24 L50 12 L38 20 Z" fill="#F5D5DE"/><circle cx="24" cy="30" r="2" fill="#456B89"/><circle cx="36" cy="30" r="2" fill="#456B89"/></svg></div>
       <div class="section-head"><div class="kicker">A little surprise every day</div><h2>Daily Surprise</h2><p>Open it and see what I prepared for you today.</p></div>
       <div class="surprise-card" id="surpriseCard">
         <div class="surprise-inner">
@@ -893,7 +909,20 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="admin-group-label">时间线</div>
     <div id="adminTimeline"></div>
     <div class="admin-section"><h3>我们的小相框</h3><p class="admin-muted">为路上的拍立得相框选一张照片。存在这台设备上，随时可以换。</p><div class="admin-grid"><label class="admin-field">他的相框<input id="frameHisInput" type="file" accept="image/*"></label><label class="admin-field">她的相框<input id="frameHerInput" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="frameHisPreview" alt="他的相框 preview"><img id="frameHerPreview" alt="她的相框 preview"></div><div class="admin-actions"><button class="admin-action" id="frameHisRemove" type="button">删除他的照片</button><button class="admin-action" id="frameHerRemove" type="button">删除她的照片</button></div></div>
-    <div class="admin-section"><h3>时间线节点</h3><p class="admin-muted">为每个里程碑节点上传一张照片。存在这台设备上。</p><div class="admin-grid" style="grid-template-columns:1fr 1fr"><label class="admin-field">① 我们相遇的那天<input id="moment0Input" type="file" accept="image/*"></label><label class="admin-field">② 第一次晚安<input id="moment1Input" type="file" accept="image/*"></label><label class="admin-field">③ 第一次约会<input id="moment2Input" type="file" accept="image/*"></label><label class="admin-field">④ 第一次牵手<input id="moment3Input" type="file" accept="image/*"></label><label class="admin-field">⑤ 第一次亲吻<input id="moment4Input" type="file" accept="image/*"></label><label class="admin-field">⑥ 第一次旅行<input id="moment5Input" type="file" accept="image/*"></label><label class="admin-field">⑦ 我们变成了"我们"<input id="moment6Input" type="file" accept="image/*"></label><label class="admin-field">⑧ 第一次吵架和好<input id="moment7Input" type="file" accept="image/*"></label><label class="admin-field">⑨ 见你的家人<input id="moment8Input" type="file" accept="image/*"></label><label class="admin-field">⑩ 一起过的第一个生日<input id="moment9Input" type="file" accept="image/*"></label><label class="admin-field">⑪ 第一束花<input id="moment10Input" type="file" accept="image/*"></label><label class="admin-field">⑫ 平凡的一天<input id="moment11Input" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="moment0Preview" alt=""><img id="moment1Preview" alt=""><img id="moment2Preview" alt=""><img id="moment3Preview" alt=""><img id="moment4Preview" alt=""><img id="moment5Preview" alt=""><img id="moment6Preview" alt=""><img id="moment7Preview" alt=""><img id="moment8Preview" alt=""><img id="moment9Preview" alt=""><img id="moment10Preview" alt=""><img id="moment11Preview" alt=""></div><div class="admin-actions"><button class="admin-action" id="moment0Remove" type="button">Remove ①</button><button class="admin-action" id="moment1Remove" type="button">Remove ②</button><button class="admin-action" id="moment2Remove" type="button">Remove ③</button><button class="admin-action" id="moment3Remove" type="button">Remove ④</button><button class="admin-action" id="moment4Remove" type="button">Remove ⑤</button><button class="admin-action" id="moment5Remove" type="button">Remove ⑥</button><button class="admin-action" id="moment6Remove" type="button">Remove ⑦</button><button class="admin-action" id="moment7Remove" type="button">Remove ⑧</button><button class="admin-action" id="moment8Remove" type="button">Remove ⑨</button><button class="admin-action" id="moment9Remove" type="button">Remove ⑩</button><button class="admin-action" id="moment10Remove" type="button">Remove ⑪</button><button class="admin-action" id="moment11Remove" type="button">Remove ⑫</button></div></div>
+    <div class="admin-section"><h3>时间线节点</h3><p class="admin-muted">为每个里程碑节点上传一张照片。存在这台设备上。</p><div class="admin-grid" style="grid-template-columns:1fr 1fr"><label class="admin-field">① 我们相遇的那天<input id="moment0Input" type="file" accept="image/*"></label><label class="admin-field">② 第一次晚安<input id="moment1Input" type="file" accept="image/*"></label><label class="admin-field">③ 第一次约会<input id="moment2Input" type="file" accept="image/*"></label><label class="admin-field">④ 第一次牵手<input id="moment3Input" type="file" accept="image/*"></label><label class="admin-field">⑤ 第一次亲吻<input id="moment4Input" type="file" accept="image/*"></label><label class="admin-field">⑥ 第一次旅行<input id="moment5Input" type="file" accept="image/*"></label><label class="admin-field">⑦ 我们变成了"我们"<input id="moment6Input" type="file" accept="image/*"></label><label class="admin-field">⑧ 第一次吵架和好<input id="moment7Input" type="file" accept="image/*"></label><label class="admin-field">⑨ 见你的家人<input id="moment8Input" type="file" accept="image/*"></label><label class="admin-field">⑩ 一起过的第一个生日<input id="moment9Input" type="file" accept="image/*"></label><label class="admin-field">⑪ 第一束花<input id="moment10Input" type="file" accept="image/*"></label><label class="admin-field">⑫ 平凡的一天<input id="moment11Input" type="file" accept="image/*"></label></div><div class="frame-previews"><img id="moment0Preview" alt=""><img id="moment1Preview" alt=""><img id="moment2Preview" alt=""><img id="moment3Preview" alt=""><img id="moment4Preview" alt=""><img id="moment5Preview" alt=""><img id="moment6Preview" alt=""><img id="moment7Preview" alt=""><img id="moment8Preview" alt=""><img id="moment9Preview" alt=""><img id="moment10Preview" alt=""><img id="moment11Preview" alt=""></div><div class="admin-actions"><button class="admin-action" id="moment0Remove" type="button">Remove ①</button><button class="admin-action" id="moment1Remove" type="button">Remove ②</button><button class="admin-action" id="moment2Remove" type="button">Remove ③</button><button class="admin-action" id="moment3Remove" type="button">Remove ④</button><button class="admin-action" id="moment4Remove" type="button">Remove ⑤</button><button class="admin-action" id="moment5Remove" type="button">Remove ⑥</button><button class="admin-action" id="moment6Remove" type="button">Remove ⑦</button><button class="admin-action" id="moment7Remove" type="button">Remove ⑧</button><button class="admin-action" id="moment8Remove" type="button">Remove ⑨</button><button class="admin-action" id="moment9Remove" type="button">Remove ⑩</button><button class="admin-action" id="moment10Remove" type="button">Remove ⑪</button><button class="admin-action" id="moment11Remove" type="button">Remove ⑫</button></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">
+      <h3 style="margin:0 0 8px">+ 添加新时间线节点</h3>
+      <p class="admin-muted" style="margin-bottom:12px">添加后时间线会自动延长，刷新页面后生效。</p>
+      <div class="admin-grid">
+        <label class="admin-field">标题<input id="newMomentTitle" placeholder="如：第一次看海"></label>
+        <label class="admin-field">日期<input id="newMomentDate" placeholder="如：2025-06"></label>
+        <label class="admin-field" style="grid-column:1/-1">故事<textarea id="newMomentText" rows="2" placeholder="发生了什么..."></textarea></label>
+        <label class="admin-field" style="grid-column:1/-1">照片<input id="newMomentPhoto" type="file" accept="image/*"></label>
+      </div>
+      <div class="admin-actions">
+        <button class="admin-action" id="addMomentButton" type="button">添加节点</button>
+      </div>
+    </div></div>
     <div class="admin-group-label">回忆相册</div>
     <div id="adminAlbum"></div>
     <div class="admin-section"><h3>相册照片</h3><p class="admin-muted">选择一张或多张照片，选好日期，会自动归到对应年份和季节。</p><div class="admin-grid"><label class="admin-field">照片（可多选）<input id="albumPhotoInput" type="file" accept="image/*" multiple></label><label class="admin-field">拍摄日期<input id="album日期Input" type="date"></label></div><div class="admin-actions"><button class="admin-action" id="albumAddButton" type="button">添加照片</button><button class="admin-action" id="albumClearButton" type="button">清空全部</button></div></div>
@@ -1137,8 +1166,8 @@ initCounters();
   const decorEl = document.getElementById('journeyDecor');
   if(!journeyEl||!viewportEl||!trackEl||!svgEl||!pathEl||!walkerEl) return;
 
-  // 想改回忆，只改这一段：图标、标题、日期、一句话
-  const MOMENTS = [
+  // 默认 12 个节点，后续可在 Admin 里无限添加
+  const DEFAULT_MOMENTS = [
     {glyph:'☁', title:'The day we met',           date:'Add your date', text:'The first hello. Maybe we didn’t know it yet, but something lovely had just begun.'},
     {glyph:'☾', title:'第一次晚安',      date:'填写日期', text:'聊到深夜，谁都不想先说晚安。'},
     {glyph:'♡', title:'第一次约会',           date:'填写日期', text:'有点紧张，有点兴奋，真希望能重来一遍。'},
@@ -1152,6 +1181,12 @@ initCounters();
     {glyph:'♡', title:'第一束花',        date:'填写日期', text:'一个小小的举动，胜过千言万语。'},
     {glyph:'✦', title:'平凡的一天',           date:'填写日期', text:'每一个变得不平凡的平凡日子，都属于这里。'}
   ];
+  // 加载用户自定义的额外节点
+  let MOMENTS = DEFAULT_MOMENTS.slice();
+  try {
+    const extra = JSON.parse(localStorage.getItem('littleSky.extraMoments') || '[]');
+    if(Array.isArray(extra)) MOMENTS = MOMENTS.concat(extra);
+  } catch(e){}
   const TILTS = [-3.2, 2.6, -2.4, 3];
   const clamp = (v,a,b)=>Math.min(Math.max(v,a),b);
 
@@ -1169,6 +1204,12 @@ initCounters();
                  + '<div class="meta" contenteditable="true" data-m="date" data-i="'+i+'">'+saved日期+'</div>'
                  + '<p contenteditable="true" data-m="text" data-i="'+i+'">'+savedText+'</p></div>';
     trackEl.appendChild(el);
+    // 加载该节点保存的照片
+    const savedPhoto = localStorage.getItem('littleSky.momentPhoto_'+i);
+    if(savedPhoto){
+      const img = el.querySelector('.art img');
+      if(img){ img.src = savedPhoto; img.style.display = 'block'; const span = el.querySelector('.art span'); if(span) span.style.display = 'none'; }
+    }
     // Bind save on blur
     el.querySelectorAll('[contenteditable]').forEach(f=>{
       f.addEventListener('blur', ()=>{
@@ -1641,6 +1682,38 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
       input.value = '';
     });
   }
+})();
+
+/* ===== 添加新时间线节点 ===== */
+(function(){
+  const btn = document.getElementById('addMomentButton');
+  if(!btn) return;
+  btn.addEventListener('click', () => {
+    const title = document.getElementById('newMomentTitle').value.trim();
+    const date = document.getElementById('newMomentDate').value.trim();
+    const text = document.getElementById('newMomentText').value.trim();
+    if(!title){ alert('请填写标题'); return; }
+    let extra = [];
+    try { extra = JSON.parse(localStorage.getItem('littleSky.extraMoments') || '[]'); } catch(e){}
+    const newIdx = 12 + extra.length; // 新节点的全局索引
+    extra.push({ glyph:'✦', title, date: date||'填写日期', text: text||'新的回忆' });
+    localStorage.setItem('littleSky.extraMoments', JSON.stringify(extra));
+    // 处理照片
+    const fileInput = document.getElementById('newMomentPhoto');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if(file){
+      compress(file, dataUrl => {
+        localStorage.setItem('littleSky.momentPhoto_'+newIdx, dataUrl);
+        alert('节点和照片已添加！刷新页面后时间线会延长。');
+      });
+    } else {
+      alert('节点已添加！刷新页面后时间线会延长。');
+    }
+    document.getElementById('newMomentTitle').value = '';
+    document.getElementById('newMomentDate').value = '';
+    document.getElementById('newMomentText').value = '';
+    fileInput.value = '';
+  });
 })();
 
 /* ===== 相册：按年+季节分组，存本地 ===== */
