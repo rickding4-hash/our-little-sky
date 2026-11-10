@@ -1059,6 +1059,29 @@ if(sb) {
       window.dispatchEvent(new Event('settings:synced'));
     }
   });
+  // Real-time: listen for changes from other devices
+  sb.channel('public:app_settings')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, (payload) => {
+      if(payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const row = payload.new;
+        const cur = localStorage.getItem(row.key);
+        if(cur !== row.value) {
+          _origSet(row.key, row.value);
+          window.dispatchEvent(new Event('settings:synced'));
+          // Soft reload after a moment if not typing in admin
+          setTimeout(() => {
+            const active = document.activeElement;
+            if(!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && !active.isContentEditable)) {
+              location.reload();
+            }
+          }, 1500);
+        }
+      } else if(payload.eventType === 'DELETE') {
+        _origDel(payload.old.key);
+        window.dispatchEvent(new Event('settings:synced'));
+      }
+    })
+    .subscribe();
 }
 
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
