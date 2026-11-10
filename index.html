@@ -1236,7 +1236,7 @@ function renderCounters() {
   annivEl.textContent = String(toNext);
   annivLabel.textContent = toNext === 0 ? '今天就是纪念日' : '距离纪念日';
 }
-function initCounters(){ renderCounters(); }
+function initCounters(){ renderCounters(); window.addEventListener('settings:synced', () => { TOGETHER_SINCE = localStorage.getItem('littleSky.togetherSince') || DEFAULT_TOGETHER_SINCE; renderCounters(); }); }
 
 function setupMemoryRail() {
   if(!memoryRail) return;
@@ -2768,19 +2768,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
 
 /* ===== 倒计时：下次见面 / 生日 / 旅行 ===== */
 (function initCountdowns(){
-  const meetings = localStorage.getItem('littleSky.meetingDate') || '';
-  const birthday = localStorage.getItem('littleSky.birthdayDate') || '';
-  const trip = localStorage.getItem('littleSky.tripDate') || '';
-  // 加载自定义标签
-  const mLbl = localStorage.getItem('littleSky.meetingLabel') || '下次见面';
-  const bLbl = localStorage.getItem('littleSky.birthdayLabel') || '她的生日';
-  const tLbl = localStorage.getItem('littleSky.tripLabel') || '下一次旅行';
-  const mLEl = document.getElementById('cdMeetingLabel');
-  if(mLEl) mLEl.textContent = mLbl;
-  const bLEl = document.getElementById('cdBirthdayLabel');
-  if(bLEl) bLEl.textContent = bLbl;
-  const tLEl = document.getElementById('cdTripLabel');
-  if(tLEl) tLEl.textContent = tLbl;
   function daysTo(dateStr){
     if(!dateStr) return null;
     const target = new Date(dateStr+'T00:00:00');
@@ -2791,15 +2778,31 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
     const el = document.getElementById(id);
     if(el) el.textContent = n !== null ? n : '—';
   }
-  setNum('cdMeeting', daysTo(meetings));
-  setNum('cdBirthday', daysTo(birthday));
-  setNum('cdTrip', daysTo(trip));
-  const mEl = document.getElementById('cdMeetingDate');
-  if(mEl) mEl.textContent = meetings || '去管理里设置日期';
-  const bEl = document.getElementById('cdBirthdayDate');
-  if(bEl) bEl.textContent = birthday || '去管理里设置日期';
-  const tEl = document.getElementById('cdTripDate');
-  if(tEl) tEl.textContent = trip || '去管理里设置日期';
+  function renderAll(){
+    const meetings = localStorage.getItem('littleSky.meetingDate') || '';
+    const birthday = localStorage.getItem('littleSky.birthdayDate') || '';
+    const trip = localStorage.getItem('littleSky.tripDate') || '';
+    const mLbl = localStorage.getItem('littleSky.meetingLabel') || '下次见面';
+    const bLbl = localStorage.getItem('littleSky.birthdayLabel') || '她的生日';
+    const tLbl = localStorage.getItem('littleSky.tripLabel') || '下一次旅行';
+    const mLEl = document.getElementById('cdMeetingLabel');
+    if(mLEl) mLEl.textContent = mLbl;
+    const bLEl = document.getElementById('cdBirthdayLabel');
+    if(bLEl) bLEl.textContent = bLbl;
+    const tLEl = document.getElementById('cdTripLabel');
+    if(tLEl) tLEl.textContent = tLbl;
+    setNum('cdMeeting', daysTo(meetings));
+    setNum('cdBirthday', daysTo(birthday));
+    setNum('cdTrip', daysTo(trip));
+    const mEl = document.getElementById('cdMeetingDate');
+    if(mEl) mEl.textContent = meetings || '去管理里设置日期';
+    const bEl = document.getElementById('cdBirthdayDate');
+    if(bEl) bEl.textContent = birthday || '去管理里设置日期';
+    const tEl = document.getElementById('cdTripDate');
+    if(tEl) tEl.textContent = trip || '去管理里设置日期';
+  }
+  renderAll();
+  window.addEventListener('settings:synced', renderAll);
 })();
 
 /* ===== 愿望清单（升级版）：卡片 + 进度 + 完成照片 ===== */
