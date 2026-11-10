@@ -1385,12 +1385,12 @@ initCounters();
     el.style.setProperty('--tilt', TILTS[i%TILTS.length]+'deg');
     // Load saved overrides
     const savedTitle = localStorage.getItem('littleSky.momentTitle_'+i) || m.title;
-    const saved日期  = localStorage.getItem('littleSky.moment日期_'+i)  || m.date;
+    const savedDate  = localStorage.getItem('littleSky.momentDate_'+i)  || m.date;
     const savedText  = localStorage.getItem('littleSky.momentText_'+i)  || m.text;
     el.innerHTML = '<div class="jcard"><div class="art"><img alt="'+m.title+'"><span>'+m.glyph+'</span></div>'
                  + (i >= 12 ? '<button class="jnode-del" data-i="'+i+'" title="删除此节点">×</button>' : '')
                  + '<div class="cap" contenteditable="true" data-m="title" data-i="'+i+'">'+savedTitle+'</div>'
-                 + '<div class="meta" contenteditable="true" data-m="date" data-i="'+i+'">'+saved日期+'</div>'
+                 + '<div class="meta" contenteditable="true" data-m="date" data-i="'+i+'">'+savedDate+'</div>'
                  + '<p contenteditable="true" data-m="text" data-i="'+i+'">'+savedText+'</p>'
                  + '<div class="jnode-pet">'+(i%2===0 ? '<svg viewBox="0 0 40 32" width="28" height="22"><ellipse cx="20" cy="20" rx="13" ry="9" fill="#F5D5DE"/><path d="M9 15 L6 8 L14 12 Z" fill="#F5D5DE"/><path d="M31 15 L34 8 L26 12 Z" fill="#F5D5DE"/><circle cx="16" cy="19" r="1.5" fill="#456B89"/><circle cx="24" cy="19" r="1.5" fill="#456B89"/></svg>' : '<svg viewBox="0 0 38 26" width="26" height="18"><ellipse cx="19" cy="15" rx="12" ry="8" fill="#A8D8F0"/><ellipse cx="19" cy="13" rx="9" ry="6" fill="#7FB8D9"/><circle cx="31" cy="13" r="4" fill="#A8D8F0"/><circle cx="32" cy="12" r="1" fill="#456B89"/></svg>')+'</div></div>';
     trackEl.appendChild(el);
@@ -1415,7 +1415,7 @@ initCounters();
         // 清理照片
         localStorage.removeItem('littleSky.momentPhoto_'+idx);
         localStorage.removeItem('littleSky.momentTitle_'+idx);
-        localStorage.removeItem('littleSky.moment日期_'+idx);
+        localStorage.removeItem('littleSky.momentDate_'+idx);
         localStorage.removeItem('littleSky.momentText_'+idx);
         // Wait for sync to complete before reloading
         setTimeout(() => location.reload(), 800);
