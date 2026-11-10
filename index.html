@@ -1047,15 +1047,32 @@ localStorage.removeItem = function(k) {
 };
 // Pull settings from Supabase on startup, then re-render key bits
 if(sb) {
+  // First: push all existing littleSky.* keys from localStorage to Supabase
+  const toPush = [];
+  for(let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if(k && k.startsWith('littleSky.')) {
+      const v = localStorage.getItem(k);
+      // Skip huge base64 blobs (they get migrated separately)
+      if(v && v.length < 500000 && !v.includes('data:image/')) {
+        toPush.push({ key: k, value: v });
+      }
+    }
+  }
+  if(toPush.length) {
+    sb.from('app_settings').upsert(toPush).then(({error}) => {
+      if(error) console.warn('Initial push failed', error.message);
+    });
+  }
+  // Then pull from Supabase
   sb.from('app_settings').select('key,value').then(({data}) => {
     if(!data) return;
     let changed = false;
     data.forEach(row => {
       const cur = localStorage.getItem(row.key);
-      if(cur !== row.value) { _origSet(row.key, row.value); changed = true; }
+      if(cur !== row.value && row.value && !row.value.includes('data:image/')) { _origSet(row.key, row.value); changed = true; }
     });
     if(changed) {
-      // Let sections re-read from localStorage
       window.dispatchEvent(new Event('settings:synced'));
     }
   });
@@ -1133,7 +1150,24 @@ async function migrateBase64Photos() {
     }
   }
 }
-if(sb) migrateBase64Photos();
+if(sb) migrateBase64Photos().then(() => {
+  // After migration, push all settings to Supabase and reload
+  const toPush = [];
+  for(let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if(k && k.startsWith('littleSky.')) {
+      const v = localStorage.getItem(k);
+      if(v && v.length < 500000 && !v.includes('data:image/')) {
+        toPush.push({ key: k, value: v });
+      }
+    }
+  }
+  if(toPush.length) {
+    sb.from('app_settings').upsert(toPush).then(() => {
+      console.log('Migration complete, pushed', toPush.length, 'keys');
+    });
+  }
+});
 
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
 // 可在 Manage ♡ 里修改，自动存入浏览器
