@@ -932,16 +932,16 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
     <div class="admin-section admin-hidden" id="memoryEditor"><h3 id="memoryFormTitle">添加回忆</h3><input id="memoryId" type="hidden"><div class="admin-grid"><label class="admin-field">回忆标题<input id="memoryTitle" placeholder="我永远记得的一天" maxlength="120"></label><label class="admin-field">日期<input id="memory日期" type="date"></label></div><label class="admin-field" style="margin-top:14px">你的故事<textarea id="memoryStory" placeholder="写下发生了什么……"></textarea></label><label class="admin-field" style="margin-top:14px">上传照片<input id="memoryPhotos" type="file" accept="image/*" multiple></label><div class="admin-actions"><button class="admin-action" id="saveMemoryButton">保存回忆</button><button class="admin-action" id="cancelEditButton" type="button">清空表单</button></div><p class="admin-muted">照片存在私密云端，关闭浏览器后依然保留。</p></div>
     <div class="admin-section admin-setup">
       <h3>首次设置</h3>
-      <p class="admin-muted">Run this once in Supabase → SQL Editor. It creates the member, memory and shared-settings tables, locks memory writes to the administrator, and enables cross-device settings sync.</p>
+      <p class="admin-muted">Run this once in Supabase → SQL Editor. It creates the member table, locks writes to the administrator only, and gives both of you read access.</p>
       <details><summary>Show setup SQL</summary><pre id="setupSql">-- 1) who belongs here, and with which role
-create table if not exists public.couple_members (
+create table if not exists public.couple_member (
   user_id uuid primary key references auth.users(id) on delete cascade,
   role text not null default 'viewer' check (role in ('admin','viewer')),
   created_at timestamptz not null default now()
 );
-alter table public.couple_members enable row level security;
-drop policy if exists "read own role" on public.couple_members;
-create policy "read own role" on public.couple_members
+alter table public.couple_member enable row level security;
+drop policy if exists "read own role" on public.couple_member;
+create policy "read own role" on public.couple_member
   for select to authenticated using (auth.uid() = user_id);
 
 -- 2) shared memories
@@ -960,7 +960,7 @@ alter table public.memories enable row level security;
 create or replace function public.is_couple_admin() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
-    select 1 from public.couple_members m
+    select 1 from public.couple_member m
     where m.user_id = auth.uid() and m.role = 'admin'
   );
 $$;
@@ -997,42 +997,11 @@ create policy "Admin can update couple photos" on storage.objects
 create policy "Admin can delete couple photos" on storage.objects
   for delete to authenticated using (bucket_id = 'couple-memories' and public.is_couple_admin());
 
--- 5B) shared settings used by the timeline, scrapbook, letters and other sections
-create table if not exists public.app_settings (
-  key text primary key,
-  value text not null,
-  updated_at timestamptz not null default now()
-);
-alter table public.app_settings enable row level security;
-grant select, insert, update, delete on public.app_settings to authenticated;
-drop policy if exists "Couple members can read app settings" on public.app_settings;
-drop policy if exists "Couple members can insert app settings" on public.app_settings;
-drop policy if exists "Couple members can update app settings" on public.app_settings;
-drop policy if exists "Couple members can delete app settings" on public.app_settings;
-create policy "Couple members can read app settings" on public.app_settings
-  for select to authenticated using (
-    exists (select 1 from public.couple_members m where m.user_id = auth.uid())
-  );
-create policy "Couple members can insert app settings" on public.app_settings
-  for insert to authenticated with check (
-    exists (select 1 from public.couple_members m where m.user_id = auth.uid())
-  );
-create policy "Couple members can update app settings" on public.app_settings
-  for update to authenticated using (
-    exists (select 1 from public.couple_members m where m.user_id = auth.uid())
-  ) with check (
-    exists (select 1 from public.couple_members m where m.user_id = auth.uid())
-  );
-create policy "Couple members can delete app settings" on public.app_settings
-  for delete to authenticated using (
-    exists (select 1 from public.couple_members m where m.user_id = auth.uid())
-  );
-
--- 6) register the two accounts (replace the emails), then disable sign-ups
-insert into public.couple_members (user_id, role)
+-- 6) Optional: register the two accounts (replace the emails) only if you know both emails
+insert into public.couple_member (user_id, role)
 select id, 'admin' from auth.users where email = 'you@example.com'
 on conflict (user_id) do update set role = 'admin';
-insert into public.couple_members (user_id, role)
+insert into public.couple_member (user_id, role)
 select id, 'viewer' from auth.users where email = 'her@example.com'
 on conflict (user_id) do update set role = 'viewer';</pre></details>
       <p class="admin-muted">Project URL: https://ixslwtshfbxhxsgdybvk.supabase.co<br>Publishable key is already configured in this site's public client settings. Publishable keys are meant for browsers; all real protection comes from the row-level policies above. Never put a service_role or secret key in website code.</p>
@@ -1048,164 +1017,165 @@ on conflict (user_id) do update set role = 'viewer';</pre></details>
 const SUPABASE_URL = 'https://ixslwtshfbxhxsgdybvk.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_D8HgIejSZEJQDzZVgX0QcQ_Qt8JWSnu';
 
-// ——— Supabase client + key-value sync layer ———
+// ——— Supabase client + authenticated cross-device settings sync ———
 let sb = null;
 try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage } }); } catch(e) { console.warn('Supabase init failed', e); }
 
-// Private Storage upload helper. Never use getPublicUrl() for this private bucket.
-// Feature modules store a signed URL for cross-device display; memory records store paths
-// and receive fresh signed URLs every time the gallery is loaded.
+// Private bucket helpers. The database stores object paths, never expiring signed URLs.
+const OLS_BUCKET = 'couple-memories';
+const OLS_PATH_MARKER = '__OLS_STORAGE_PATH__:';
+let olsCloudSyncReady = false;
+let olsSyncingRemote = false;
+let olsWriteQueue = Promise.resolve();
+const _origSet = localStorage.setItem.bind(localStorage);
+const _origDel = localStorage.removeItem.bind(localStorage);
+
 async function uploadPhoto(file, folder) {
   if(!sb) return null;
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
-  const path = (folder || 'misc') + '/' + Date.now() + '-' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '.' + ext;
-  const { error: uploadError } = await sb.storage.from('couple-memories').upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+  const userPart = currentUser && currentUser.id ? currentUser.id : 'legacy';
+  const path = (folder || 'misc') + '/' + userPart + '/' + Date.now() + '-' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '.' + ext;
+  const { error: uploadError } = await sb.storage.from(OLS_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
   if(uploadError) { console.error('Upload failed', uploadError); throw uploadError; }
-  const { data, error } = await sb.storage.from('couple-memories').createSignedUrl(path, 60 * 60 * 24 * 7);
+  const { data, error } = await sb.storage.from(OLS_BUCKET).createSignedUrl(path, 3600);
   if(error || !data || !data.signedUrl) { console.error('Could not create photo URL', error); throw (error || new Error('Could not create a signed photo URL')); }
   return data.signedUrl;
 }
 
-// Cross-device settings sync.
-// IMPORTANT: Do not read app_settings before authentication. The table is private
-// and protected by RLS, so the initial anonymous request would fail on a new phone.
-const _origSet = localStorage.setItem.bind(localStorage);
-const _origDel = localStorage.removeItem.bind(localStorage);
+function olsExtractBucketPath(value) {
+  try {
+    const u = new URL(value);
+    const marker = '/storage/v1/object/sign/' + OLS_BUCKET + '/';
+    const publicMarker = '/storage/v1/object/public/' + OLS_BUCKET + '/';
+    const i = u.pathname.indexOf(marker);
+    const j = u.pathname.indexOf(publicMarker);
+    if(i >= 0) return decodeURIComponent(u.pathname.slice(i + marker.length));
+    if(j >= 0) return decodeURIComponent(u.pathname.slice(j + publicMarker.length));
+  } catch(e) {}
+  return null;
+}
 
-localStorage.setItem = function(k, v) {
-  _origSet(k, v);
-  if(sb && typeof k === 'string' && k.startsWith('littleSky.')) {
-    sb.auth.getSession().then(({data}) => {
-      if(!data || !data.session) return;
-      return sb.from('app_settings').upsert({
-        key: k, value: String(v), updated_at: new Date().toISOString()
-      });
-    }).then(result => {
-      if(result && result.error) console.warn('Sync failed for', k, result.error.message);
-    }).catch(error => console.warn('Sync failed for', k, error));
+// Convert legacy data URLs and signed URLs inside JSON settings into stable Storage-path markers.
+async function olsToCloudValue(value, folderKey, userId) {
+  if(typeof value === 'string') {
+    if(value.startsWith(OLS_PATH_MARKER)) return value;
+    if(value.startsWith('data:image/')) {
+      const blob = await (await fetch(value)).blob();
+      const ext = (blob.type.split('/')[1] || 'jpg').replace(/[^a-z0-9]/gi,'') || 'jpg';
+      const path = 'legacy-settings/' + userId + '/' + Date.now() + '-' + crypto.randomUUID() + '.' + ext;
+      const {error} = await sb.storage.from(OLS_BUCKET).upload(path, blob, {upsert:false, contentType:blob.type || 'image/jpeg'});
+      if(error) throw error;
+      return OLS_PATH_MARKER + path;
+    }
+    const existingPath = olsExtractBucketPath(value);
+    if(existingPath) return OLS_PATH_MARKER + existingPath;
+    // JSON-encoded objects/arrays are handled recursively below.
+    const trimmed = value.trim();
+    if((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try { return JSON.stringify(await olsToCloudValue(JSON.parse(value), folderKey, userId)); } catch(e) {}
+    }
+    return value;
   }
-};
+  if(Array.isArray(value)) return Promise.all(value.map(v=>olsToCloudValue(v,folderKey,userId)));
+  if(value && typeof value === 'object') {
+    const out = {};
+    for(const [k,v] of Object.entries(value)) out[k] = await olsToCloudValue(v,folderKey,userId);
+    return out;
+  }
+  return value;
+}
 
+async function olsFromCloudValue(value) {
+  if(typeof value === 'string') {
+    if(value.startsWith(OLS_PATH_MARKER)) {
+      const path = value.slice(OLS_PATH_MARKER.length);
+      const {data,error} = await sb.storage.from(OLS_BUCKET).createSignedUrl(path,3600);
+      if(error || !data?.signedUrl) { console.warn('Could not refresh legacy photo URL:',path,error); return ''; }
+      return data.signedUrl;
+    }
+    const trimmed = value.trim();
+    if((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try { return JSON.stringify(await olsFromCloudValue(JSON.parse(value))); } catch(e) {}
+    }
+    return value;
+  }
+  if(Array.isArray(value)) return Promise.all(value.map(olsFromCloudValue));
+  if(value && typeof value === 'object') {
+    const out = {};
+    for(const [k,v] of Object.entries(value)) out[k] = await olsFromCloudValue(v);
+    return out;
+  }
+  return value;
+}
+
+function olsQueueSettingWrite(key, value) {
+  if(!sb || !olsCloudSyncReady || olsSyncingRemote || currentRole !== 'admin' || !key.startsWith('littleSky.')) return;
+  olsWriteQueue = olsWriteQueue.then(async()=>{
+    try {
+      const cloudValue = await olsToCloudValue(String(value),key,currentUser.id);
+      const {error} = await sb.from('app_settings').upsert({key,value:cloudValue,updated_at:new Date().toISOString()},{onConflict:'key'});
+      if(error) throw error;
+    } catch(e) { console.error('Cloud save failed for '+key,e); setStatus('云端保存失败：'+(e.message||e),'error'); }
+  });
+}
+
+localStorage.setItem = function(k,v) {
+  _origSet(k,v);
+  if(typeof k === 'string' && k.startsWith('littleSky.')) olsQueueSettingWrite(k,String(v));
+};
 localStorage.removeItem = function(k) {
   _origDel(k);
-  if(sb && typeof k === 'string' && k.startsWith('littleSky.')) {
-    sb.auth.getSession().then(({data}) => {
-      if(!data || !data.session) return;
-      return sb.from('app_settings').delete().eq('key', k);
-    }).then(result => {
-      if(result && result.error) console.warn('Delete sync failed for', k, result.error.message);
-    }).catch(error => console.warn('Delete sync failed for', k, error));
+  if(sb && olsCloudSyncReady && !olsSyncingRemote && currentRole === 'admin' && typeof k === 'string' && k.startsWith('littleSky.')) {
+    olsWriteQueue = olsWriteQueue.then(async()=>{
+      const {error}=await sb.from('app_settings').delete().eq('key',k);
+      if(error) console.error('Cloud delete failed for '+k,error);
+    });
   }
 };
 
-// Stored feature photos use signed URLs because the Storage bucket is private.
-// Re-create a fresh URL from its object path whenever settings are synced to a device.
-async function refreshSignedPhotoValue(value) {
-  const prefix = '/storage/v1/object/sign/couple-memories/';
-  async function walk(item) {
-    if(typeof item === 'string' && item.includes(prefix)) {
-      try {
-        const parsed = new URL(item);
-        const marker = parsed.pathname.indexOf(prefix);
-        if(marker < 0) return item;
-        const objectPath = decodeURIComponent(parsed.pathname.slice(marker + prefix.length));
-        const {data, error} = await sb.storage.from('couple-memories').createSignedUrl(objectPath, 3600);
-        if(error) {
-          console.warn('Could not refresh stored photo URL:', objectPath, error.message);
-          return item;
-        }
-        return data && data.signedUrl ? data.signedUrl : item;
-      } catch(error) {
-        console.warn('Invalid stored photo URL:', error);
-        return item;
-      }
-    }
-    if(Array.isArray(item)) return Promise.all(item.map(walk));
-    if(item && typeof item === 'object') {
-      const entries = await Promise.all(Object.entries(item).map(async ([key, val]) => [key, await walk(val)]));
-      return Object.fromEntries(entries);
-    }
-    return item;
-  }
-
-  try {
-    const parsed = JSON.parse(String(value));
-    return JSON.stringify(await walk(parsed));
-  } catch(e) {
-    return await walk(String(value));
-  }
-}
-
-let settingsSyncPromise = null;
+// Run only after an authorized member signs in. Existing cloud rows win; admin-only local rows are migrated once.
 async function syncRemoteSettings() {
-  if(!sb) return false;
-  if(settingsSyncPromise) return settingsSyncPromise;
-
-  settingsSyncPromise = (async () => {
-    const {data: sessionData, error: sessionError} = await sb.auth.getSession();
-    if(sessionError || !sessionData || !sessionData.session) return false;
-
-    const {data: rows, error} = await sb.from('app_settings').select('key,value');
-    if(error) {
-      console.error('Could not read app_settings:', error);
-      if(error.code === '42P01' || /app_settings/i.test(error.message || '')) {
-        setStatus('跨设备内容同步表尚未创建，请在 Supabase 执行页面中的补充 SQL。', 'error');
-      }
-      return false;
+  if(!sb || !currentUser || !currentRole) return;
+  olsCloudSyncReady = false;
+  const {data,error} = await sb.from('app_settings').select('key,value');
+  if(error) { setStatus('读取云端设置失败：'+error.message,'error'); return; }
+  const remote = new Map((data||[]).map(row=>[row.key,row.value]));
+  const localKeys = [];
+  for(let i=0;i<localStorage.length;i++) {
+    const key=localStorage.key(i);
+    if(key && key.startsWith('littleSky.')) localKeys.push(key);
+  }
+  let changed = false;
+  olsSyncingRemote = true;
+  try {
+    for(const row of (data||[])) {
+      const restored = await olsFromCloudValue(row.value == null ? '' : row.value);
+      if(localStorage.getItem(row.key) !== restored) { _origSet(row.key,restored); changed=true; }
     }
-
-    const remote = new Map((rows || []).map(row => [row.key, row.value]));
-    let changed = false;
-
-    // Cloud wins when a key already exists. This lets a new phone restore the
-    // shared settings instead of showing its empty browser-local storage.
-    for(const row of (rows || [])) {
-      const raw = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
-      const refreshed = await refreshSignedPhotoValue(raw);
-      if(localStorage.getItem(row.key) !== refreshed) {
-        _origSet(row.key, refreshed);
-        changed = true;
-      }
-      // Keep the refreshed URL in the cloud too, so other devices receive it.
-      if(refreshed !== raw) {
-        const {error: updateError} = await sb.from('app_settings').upsert({
-          key: row.key, value: refreshed, updated_at: new Date().toISOString()
-        });
-        if(updateError) console.warn('Could not update refreshed photo URL:', updateError.message);
-      }
-    }
-
-    // Preserve the existing desktop content on first setup: upload local-only
-    // keys when the cloud table is empty or does not yet contain those keys.
-    const localKeys = [];
-    for(let i=0;i<localStorage.length;i++) {
-      const key = localStorage.key(i);
-      if(key && key.startsWith('littleSky.') && !remote.has(key)) localKeys.push(key);
-    }
+  } finally { olsSyncingRemote = false; }
+  if(currentRole === 'admin') {
     for(const key of localKeys) {
-      const value = localStorage.getItem(key);
-      if(value === null) continue;
-      const {error: uploadError} = await sb.from('app_settings').upsert({
-        key, value, updated_at: new Date().toISOString()
-      });
-      if(uploadError) console.warn('Could not upload local setting:', key, uploadError.message);
+      if(remote.has(key)) continue;
+      const localValue=localStorage.getItem(key);
+      if(localValue == null) continue;
+      try {
+        const cloudValue=await olsToCloudValue(localValue,key,currentUser.id);
+        const {error:upsertError}=await sb.from('app_settings').upsert({key,value:cloudValue,updated_at:new Date().toISOString()},{onConflict:'key'});
+        if(upsertError) throw upsertError;
+      } catch(e) { console.error('Legacy migration failed for '+key,e); setStatus('本地数据迁移失败：'+key+'；'+(e.message||e),'error'); }
     }
-
-    if(changed && !sessionStorage.getItem('littleSky.settingsReloaded')) {
-      // The feature sections read localStorage during page initialization.
-      // Reload once after restoring remote values so every section re-renders.
-      sessionStorage.setItem('littleSky.settingsReloaded', '1');
-      window.location.reload();
-      return true;
-    }
-    sessionStorage.removeItem('littleSky.settingsReloaded');
-    return false;
-  })();
-
-  try { return await settingsSyncPromise; }
-  finally { settingsSyncPromise = null; }
+  }
+  olsCloudSyncReady = true;
+  await olsWriteQueue;
+  // Modules read localStorage during initial page construction; reload once after cloud hydration.
+  const reloadFlag='ols.settings.hydrated.'+currentUser.id;
+  if(changed && !sessionStorage.getItem(reloadFlag)) {
+    sessionStorage.setItem(reloadFlag,'1');
+    location.reload();
+    return;
+  }
+  if(!changed) sessionStorage.removeItem(reloadFlag);
 }
-
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
 // 可在 Manage ♡ 里修改，自动存入浏览器
 const DEFAULT_TOGETHER_SINCE = '2024-05-20';
@@ -1309,19 +1279,15 @@ async function syncSession(session) {
     if(notice) notice.innerHTML='<p>点击右上角「管理 ♡」登录后查看私密的共享回忆和照片。</p>';
     return;
   }
-  const {data,error}=await supabaseClient.from('couple_members').select('role').eq('user_id',currentUser.id).maybeSingle();
-  if(error&&error.code==='42P01'){await supabaseClient.auth.signOut();setStatus('couple_members 表还不存在。请在下方「首次设置」里运行建表 SQL，然后重新登录。','error');return;}
-  if(error||!data){await supabaseClient.auth.signOut();setStatus('This account is not on the couple access list. Add its UUID to couple_members in Supabase.','error');return;}
+  const {data,error}=await supabaseClient.from('couple_member').select('role').eq('user_id',currentUser.id).maybeSingle();
+  if(error&&error.code==='42P01'){await supabaseClient.auth.signOut();setStatus('couple_member 表还不存在。请在下方「首次设置」里运行建表 SQL，然后重新登录。','error');return;}
+  if(error||!data){await supabaseClient.auth.signOut();setStatus('This account is not on the couple access list. Add its UUID to couple_member in Supabase.','error');return;}
   currentRole=data.role;if(currentRole==='admin')editor.classList.remove('admin-hidden');
   setStatus(currentRole==='admin'?'Administrator access enabled. You can manage memories.':'Viewer access enabled. You can browse but cannot change memories.','success');
-  const settingsReloading = await syncRemoteSettings();
-  if(settingsReloading) return;
+  await syncRemoteSettings();
+  if(!currentUser) return;
   await loadMemories();
 }
-
-window.addEventListener('focus', () => {
-  if(currentUser) syncRemoteSettings();
-});
 
 async function startBackend(){
   if(!sb){setStatus('Supabase client did not load. Check your internet connection.','error');return;}
