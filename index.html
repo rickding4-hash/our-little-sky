@@ -86,7 +86,7 @@ button { font: inherit; }
 .hero-content { position:relative; z-index:1; max-width:680px; }
 .eyebrow { text-transform:uppercase; letter-spacing:.32em; font-size:11px; color:var(--deep); opacity:.7; font-weight:500; }
 .hero h1 { font-family:var(--font-heading); font-size:clamp(64px,11vw,128px); font-weight:500; line-height:.95; letter-spacing:-.03em; margin:28px 0 20px; color:var(--deep); }
-.hero h1 .sky-word { font-style:italic; color:var(--blush-deep); }
+.hero h1 .sky-word { font-style:italic; color:#E85A9E; }
 .hero-sub { font-family:var(--font-heading); font-style:italic; font-size:clamp(18px,2.4vw,22px); color:var(--muted); line-height:1.6; margin:0 auto 40px; }
 .enter-btn { display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(69,107,137,.25); border-radius:99px; padding:16px 32px; color:var(--deep); background:rgba(255,255,255,.6); backdrop-filter:blur(8px); font-size:13px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; transition:all .3s ease; text-decoration:none; }
 .enter-btn:hover { background:#fff; transform:translateY(-2px); box-shadow:0 12px 32px rgba(69,107,137,.15); border-color:rgba(69,107,137,.4); }
@@ -1096,6 +1096,12 @@ if(sb) {
       } else if(payload.eventType === 'DELETE') {
         _origDel(payload.old.key);
         window.dispatchEvent(new Event('settings:synced'));
+        setTimeout(() => {
+          const active = document.activeElement;
+          if(!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && !active.isContentEditable)) {
+            location.reload();
+          }
+        }, 1500);
       }
     })
     .subscribe();
@@ -1411,7 +1417,8 @@ initCounters();
         localStorage.removeItem('littleSky.momentTitle_'+idx);
         localStorage.removeItem('littleSky.moment日期_'+idx);
         localStorage.removeItem('littleSky.momentText_'+idx);
-        location.reload();
+        // Wait for sync to complete before reloading
+        setTimeout(() => location.reload(), 800);
       });
     }
     // Bind save on blur
