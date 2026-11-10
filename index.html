@@ -1084,6 +1084,57 @@ if(sb) {
     .subscribe();
 }
 
+// ——— One-time migration: convert base64 photos in localStorage to Supabase Storage URLs ———
+async function migrateBase64Photos() {
+  if(!sb) return;
+  const keys = ['littleSky.scrapPhotos','littleSky.moments','littleSky.bucketPhotos'];
+  for(const key of keys) {
+    const raw = localStorage.getItem(key);
+    if(!raw || !raw.includes('data:image/')) continue;
+    try {
+      const arr = JSON.parse(raw);
+      let changed = false;
+      for(const item of arr) {
+        const src = item.src || item.url || item.photo || item.image;
+        if(src && src.startsWith('data:image/')) {
+          // Convert base64 to blob
+          const res = await fetch(src);
+          const blob = await res.blob();
+          const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+          const folder = key.includes('scrap') ? 'scrapbook' : key.includes('bucket') ? 'bucket' : 'moments';
+          const url = await uploadPhoto(file, folder);
+          if(url) {
+            if(item.src) item.src = url;
+            if(item.url) item.url = url;
+            if(item.photo) item.photo = url;
+            if(item.image) item.image = url;
+            changed = true;
+          }
+        }
+      }
+      if(changed) {
+        localStorage.setItem(key, JSON.stringify(arr));
+        console.log('Migrated base64 photos for', key);
+      }
+    } catch(e) { console.warn('Migration failed for', key, e); }
+  }
+  // Also migrate single moment photos
+  for(let i = 0; i < 20; i++) {
+    const mk = 'littleSky.momentPhoto_' + i;
+    const src = localStorage.getItem(mk);
+    if(src && src.startsWith('data:image/')) {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        const file = new File([blob], 'moment.jpg', { type: 'image/jpeg' });
+        const url = await uploadPhoto(file, 'moments');
+        if(url) localStorage.setItem(mk, url);
+      } catch(e) {}
+    }
+  }
+}
+if(sb) migrateBase64Photos();
+
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
 // 可在 Manage ♡ 里修改，自动存入浏览器
 const DEFAULT_TOGETHER_SINCE = '2024-05-20';
