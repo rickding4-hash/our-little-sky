@@ -1104,50 +1104,77 @@ if(sb) {
 // ——— One-time migration: convert base64 photos in localStorage to Supabase Storage URLs ———
 async function migrateBase64Photos() {
   if(!sb) return;
-  const keys = ['littleSky.scrapPhotos','littleSky.moments','littleSky.bucketPhotos'];
-  for(const key of keys) {
-    const raw = localStorage.getItem(key);
-    if(!raw || !raw.includes('data:image/')) continue;
+  const FOLDER_MAP = { scrap: 'scrapbook', moment: 'moments', bucket: 'bucket', frame: 'frames', place: 'places', capsule: 'capsules', mood: 'moods' };
+  async function convertDataUrl(dataUrl, folder) {
     try {
-      const arr = JSON.parse(raw);
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const ext = (dataUrl.match(/image\/(\w+)/) || [,'jpeg'])[1].replace('jpeg','jpg');
+      const file = new File([blob], 'photo.' + ext, { type: blob.type });
+      return await uploadPhoto(file, folder || 'misc');
+    } catch(e) { return null; }
+  }
+  // Walk every littleSky.* key
+  for(let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if(!key || !key.startsWith('littleSky.')) continue;
+    const val = localStorage.getItem(key);
+    if(!val || !val.includes('data:image/')) continue;
+    const folder = key.includes('scrap') ? 'scrapbook' : key.includes('moment') ? 'moments' : key.includes('bucket') ? 'bucket' : key.includes('frame') ? 'frames' : key.includes('place') ? 'places' : key.includes('capsule') ? 'capsules' : key.includes('mood') ? 'moods' : 'misc';
+    // Direct value is a data URL
+    if(val.startsWith('data:image/')) {
+      const url = await convertDataUrl(val, folder);
+      if(url) localStorage.setItem(key, url);
+      continue;
+    }
+    // JSON value with embedded data URLs
+    try {
+      const obj = JSON.parse(val);
       let changed = false;
-      for(const item of arr) {
-        const src = item.src || item.url || item.photo || item.image;
-        if(src && src.startsWith('data:image/')) {
-          // Convert base64 to blob
-          const res = await fetch(src);
-          const blob = await res.blob();
-          const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-          const folder = key.includes('scrap') ? 'scrapbook' : key.includes('bucket') ? 'bucket' : 'moments';
-          const url = await uploadPhoto(file, folder);
-          if(url) {
-            if(item.src) item.src = url;
-            if(item.url) item.url = url;
-            if(item.photo) item.photo = url;
-            if(item.image) item.image = url;
-            changed = true;
+      function walk(node) {
+        if(!node || typeof node !== 'object') return;
+        if(typeof node === 'string') return;
+        for(const k in node) {
+          const v = node[k];
+          if(typeof v === 'string' && v.startsWith('data:image/')) {
+            // Will replace below
+          } else if(typeof v === 'object') {
+            walk(v);
           }
         }
       }
-      if(changed) {
-        localStorage.setItem(key, JSON.stringify(arr));
-        console.log('Migrated base64 photos for', key);
+      // For arrays of objects with src/url/photo/image
+      if(Array.isArray(obj)) {
+        for(const item of obj) {
+          if(!item || typeof item !== 'object') continue;
+          for(const prop of ['src','url','photo','image','img']) {
+            if(item[prop] && typeof item[prop] === 'string' && item[prop].startsWith('data:image/')) {
+              const url = await convertDataUrl(item[prop], folder);
+              if(url) { item[prop] = url; changed = true; }
+            }
+          }
+        }
+      } else if(obj && typeof obj === 'object') {
+        for(const prop of ['src','url','photo','image','img']) {
+          if(obj[prop] && typeof obj[prop] === 'string' && obj[prop].startsWith('data:image/')) {
+            const url = await convertDataUrl(obj[prop], folder);
+            if(url) { obj[prop] = url; changed = true; }
+          }
+        }
+        // Handle nested photo objects (e.g. places: {photos: {...}})
+        for(const k in obj) {
+          if(typeof obj[k] === 'object' && obj[k] !== null) {
+            for(const prop of ['src','url','photo','image']) {
+              if(obj[k][prop] && typeof obj[k][prop] === 'string' && obj[k][prop].startsWith('data:image/')) {
+                const url = await convertDataUrl(obj[k][prop], folder);
+                if(url) { obj[k][prop] = url; changed = true; }
+              }
+            }
+          }
+        }
       }
-    } catch(e) { console.warn('Migration failed for', key, e); }
-  }
-  // Also migrate single moment photos
-  for(let i = 0; i < 20; i++) {
-    const mk = 'littleSky.momentPhoto_' + i;
-    const src = localStorage.getItem(mk);
-    if(src && src.startsWith('data:image/')) {
-      try {
-        const res = await fetch(src);
-        const blob = await res.blob();
-        const file = new File([blob], 'moment.jpg', { type: 'image/jpeg' });
-        const url = await uploadPhoto(file, 'moments');
-        if(url) localStorage.setItem(mk, url);
-      } catch(e) {}
-    }
+      if(changed) localStorage.setItem(key, JSON.stringify(obj));
+    } catch(e) {}
   }
 }
 if(sb) migrateBase64Photos().then(() => {
@@ -1634,14 +1661,23 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
     paint(frameId, saved);
     paintPreview(previewId, saved);
     const input = document.getElementById(inputId);
-    if(input) input.addEventListener('change', () => {
+    if(input) input.addEventListener('change', async () => {
       const file = input.files && input.files[0];
       if(!file) return;
-      compress(file, dataUrl => {
-        localStorage.setItem(KEY(frameId), dataUrl);
-        paint(frameId, dataUrl);
-        paintPreview(previewId, dataUrl);
-      });
+      // Upload to Supabase Storage instead of base64
+      const url = await uploadPhoto(file, 'frames');
+      if(url) {
+        localStorage.setItem(KEY(frameId), url);
+        paint(frameId, url);
+        paintPreview(previewId, url);
+      } else {
+        // Fallback to base64 if upload fails
+        compress(file, dataUrl => {
+          localStorage.setItem(KEY(frameId), dataUrl);
+          paint(frameId, dataUrl);
+          paintPreview(previewId, dataUrl);
+        });
+      }
     });
     const rm = document.getElementById(frameId + 'Remove');
     if(rm) rm.addEventListener('click', () => {
