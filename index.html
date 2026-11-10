@@ -2374,16 +2374,49 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
     starsBox.innerHTML = stars.map((s,i)=>`
       <div class="ustar" data-i="${i}" style="left:${s.x}%;top:${s.y}%">
         <span class="ustar-label">${s.name}</span>
+        <button class="ustar-del" data-del="${i}" title="删除这颗星" style="position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;border:none;background:#e8a0b0;color:#fff;font-size:12px;line-height:1;cursor:pointer;display:none;">×</button>
       </div>`).join('');
     starsBox.querySelectorAll('.ustar').forEach(el=>{
-      el.addEventListener('click', ()=>{
+      el.addEventListener('click', (e)=>{
+        if(e.target.classList.contains('ustar-del')) return;
         const s = getStars()[+el.dataset.i];
         if(!s) return;
         titleEl.textContent = s.name;
         dateEl.textContent = s.date || '';
         bodyEl.textContent = s.story || '';
+        // Add delete button to modal
+        let delBtn = document.getElementById('starModalDel');
+        if(!delBtn) {
+          delBtn = document.createElement('button');
+          delBtn.id = 'starModalDel';
+          delBtn.style.cssText = 'margin-top:16px;padding:8px 16px;background:#e8a0b0;color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:13px;';
+          delBtn.textContent = '删除这颗星星';
+          const body = document.getElementById('usBody');
+          body.parentNode.appendChild(delBtn);
+        }
+        delBtn.onclick = ()=>{
+          const arr = getStars();
+          arr.splice(+el.dataset.i, 1);
+          saveStars(arr);
+          render();
+          modal.classList.remove('open');
+        };
         modal.classList.add('open');
       });
+    });
+    starsBox.querySelectorAll('.ustar-del').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const arr = getStars();
+        arr.splice(+btn.dataset.del, 1);
+        saveStars(arr);
+        render();
+      });
+    });
+    // Show delete buttons on long-press / admin mode
+    starsBox.querySelectorAll('.ustar').forEach(el=>{
+      el.addEventListener('mouseenter', ()=>{ const d=el.querySelector('.ustar-del'); if(d) d.style.display='block'; });
+      el.addEventListener('mouseleave', ()=>{ const d=el.querySelector('.ustar-del'); if(d) d.style.display='none'; });
     });
   }
   if(closeBtn) closeBtn.addEventListener('click', ()=> modal.classList.remove('open'));
