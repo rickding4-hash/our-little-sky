@@ -565,12 +565,6 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
 @media(max-width:700px){.album-section{padding:48px 0 54px}.album-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}}
 
 </style>
-
-<style>
-.memory-card img { display:block; width:100%; height:auto; object-fit:cover; }
-.memory-card.photo-load-error::before { content:'照片暂时无法加载，请检查登录状态或 Storage 权限'; display:block; padding:12px; color:#8b7180; font-size:12px; background:#f8f1f5; }
-.rail-photo img { display:block; max-width:100%; height:auto; }
-</style>
 </head>
 <body>
 <div id="app">
@@ -934,14 +928,14 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
       <h3>首次设置</h3>
       <p class="admin-muted">Run this once in Supabase → SQL Editor. It creates the member table, locks writes to the administrator only, and gives both of you read access.</p>
       <details><summary>Show setup SQL</summary><pre id="setupSql">-- 1) who belongs here, and with which role
-create table if not exists public.couple_member (
+create table if not exists public.couple_members (
   user_id uuid primary key references auth.users(id) on delete cascade,
   role text not null default 'viewer' check (role in ('admin','viewer')),
   created_at timestamptz not null default now()
 );
-alter table public.couple_member enable row level security;
-drop policy if exists "read own role" on public.couple_member;
-create policy "read own role" on public.couple_member
+alter table public.couple_members enable row level security;
+drop policy if exists "read own role" on public.couple_members;
+create policy "read own role" on public.couple_members
   for select to authenticated using (auth.uid() = user_id);
 
 -- 2) shared memories
@@ -960,7 +954,7 @@ alter table public.memories enable row level security;
 create or replace function public.is_couple_admin() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
-    select 1 from public.couple_member m
+    select 1 from public.couple_members m
     where m.user_id = auth.uid() and m.role = 'admin'
   );
 $$;
@@ -997,11 +991,11 @@ create policy "Admin can update couple photos" on storage.objects
 create policy "Admin can delete couple photos" on storage.objects
   for delete to authenticated using (bucket_id = 'couple-memories' and public.is_couple_admin());
 
--- 6) Optional: register the two accounts (replace the emails) only if you know both emails
-insert into public.couple_member (user_id, role)
+-- 6) register the two accounts (replace the emails), then disable sign-ups
+insert into public.couple_members (user_id, role)
 select id, 'admin' from auth.users where email = 'you@example.com'
 on conflict (user_id) do update set role = 'admin';
-insert into public.couple_member (user_id, role)
+insert into public.couple_members (user_id, role)
 select id, 'viewer' from auth.users where email = 'her@example.com'
 on conflict (user_id) do update set role = 'viewer';</pre></details>
       <p class="admin-muted">Project URL: https://ixslwtshfbxhxsgdybvk.supabase.co<br>Publishable key is already configured in this site's public client settings. Publishable keys are meant for browsers; all real protection comes from the row-level policies above. Never put a service_role or secret key in website code.</p>
@@ -1017,165 +1011,56 @@ on conflict (user_id) do update set role = 'viewer';</pre></details>
 const SUPABASE_URL = 'https://ixslwtshfbxhxsgdybvk.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_D8HgIejSZEJQDzZVgX0QcQ_Qt8JWSnu';
 
-// ——— Supabase client + authenticated cross-device settings sync ———
+// ——— Supabase client + key-value sync layer ———
 let sb = null;
-try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage } }); } catch(e) { console.warn('Supabase init failed', e); }
+try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY); } catch(e) { console.warn('Supabase init failed', e); }
 
-// Private bucket helpers. The database stores object paths, never expiring signed URLs.
-const OLS_BUCKET = 'couple-memories';
-const OLS_PATH_MARKER = '__OLS_STORAGE_PATH__:';
-let olsCloudSyncReady = false;
-let olsSyncingRemote = false;
-let olsWriteQueue = Promise.resolve();
-const _origSet = localStorage.setItem.bind(localStorage);
-const _origDel = localStorage.removeItem.bind(localStorage);
-
+// Photo upload helper: uploads file to Storage, returns public URL
 async function uploadPhoto(file, folder) {
   if(!sb) return null;
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
-  const userPart = currentUser && currentUser.id ? currentUser.id : 'legacy';
-  const path = (folder || 'misc') + '/' + userPart + '/' + Date.now() + '-' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '.' + ext;
-  const { error: uploadError } = await sb.storage.from(OLS_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
-  if(uploadError) { console.error('Upload failed', uploadError); throw uploadError; }
-  const { data, error } = await sb.storage.from(OLS_BUCKET).createSignedUrl(path, 3600);
-  if(error || !data || !data.signedUrl) { console.error('Could not create photo URL', error); throw (error || new Error('Could not create a signed photo URL')); }
-  return data.signedUrl;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = (folder || 'misc') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const { error } = await sb.storage.from('couple-memories').upload(path, file, { cacheControl: '3600', upsert: false });
+  if(error) { console.error('Upload failed', error); return null; }
+  const { data } = sb.storage.from('couple-memories').getPublicUrl(path);
+  return data.publicUrl;
 }
 
-function olsExtractBucketPath(value) {
-  try {
-    const u = new URL(value);
-    const marker = '/storage/v1/object/sign/' + OLS_BUCKET + '/';
-    const publicMarker = '/storage/v1/object/public/' + OLS_BUCKET + '/';
-    const i = u.pathname.indexOf(marker);
-    const j = u.pathname.indexOf(publicMarker);
-    if(i >= 0) return decodeURIComponent(u.pathname.slice(i + marker.length));
-    if(j >= 0) return decodeURIComponent(u.pathname.slice(j + publicMarker.length));
-  } catch(e) {}
-  return null;
-}
-
-// Convert legacy data URLs and signed URLs inside JSON settings into stable Storage-path markers.
-async function olsToCloudValue(value, folderKey, userId) {
-  if(typeof value === 'string') {
-    if(value.startsWith(OLS_PATH_MARKER)) return value;
-    if(value.startsWith('data:image/')) {
-      const blob = await (await fetch(value)).blob();
-      const ext = (blob.type.split('/')[1] || 'jpg').replace(/[^a-z0-9]/gi,'') || 'jpg';
-      const path = 'legacy-settings/' + userId + '/' + Date.now() + '-' + crypto.randomUUID() + '.' + ext;
-      const {error} = await sb.storage.from(OLS_BUCKET).upload(path, blob, {upsert:false, contentType:blob.type || 'image/jpeg'});
-      if(error) throw error;
-      return OLS_PATH_MARKER + path;
-    }
-    const existingPath = olsExtractBucketPath(value);
-    if(existingPath) return OLS_PATH_MARKER + existingPath;
-    // JSON-encoded objects/arrays are handled recursively below.
-    const trimmed = value.trim();
-    if((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-      try { return JSON.stringify(await olsToCloudValue(JSON.parse(value), folderKey, userId)); } catch(e) {}
-    }
-    return value;
-  }
-  if(Array.isArray(value)) return Promise.all(value.map(v=>olsToCloudValue(v,folderKey,userId)));
-  if(value && typeof value === 'object') {
-    const out = {};
-    for(const [k,v] of Object.entries(value)) out[k] = await olsToCloudValue(v,folderKey,userId);
-    return out;
-  }
-  return value;
-}
-
-async function olsFromCloudValue(value) {
-  if(typeof value === 'string') {
-    if(value.startsWith(OLS_PATH_MARKER)) {
-      const path = value.slice(OLS_PATH_MARKER.length);
-      const {data,error} = await sb.storage.from(OLS_BUCKET).createSignedUrl(path,3600);
-      if(error || !data?.signedUrl) { console.warn('Could not refresh legacy photo URL:',path,error); return ''; }
-      return data.signedUrl;
-    }
-    const trimmed = value.trim();
-    if((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-      try { return JSON.stringify(await olsFromCloudValue(JSON.parse(value))); } catch(e) {}
-    }
-    return value;
-  }
-  if(Array.isArray(value)) return Promise.all(value.map(olsFromCloudValue));
-  if(value && typeof value === 'object') {
-    const out = {};
-    for(const [k,v] of Object.entries(value)) out[k] = await olsFromCloudValue(v);
-    return out;
-  }
-  return value;
-}
-
-function olsQueueSettingWrite(key, value) {
-  if(!sb || !olsCloudSyncReady || olsSyncingRemote || currentRole !== 'admin' || !key.startsWith('littleSky.')) return;
-  olsWriteQueue = olsWriteQueue.then(async()=>{
-    try {
-      const cloudValue = await olsToCloudValue(String(value),key,currentUser.id);
-      const {error} = await sb.from('app_settings').upsert({key,value:cloudValue,updated_at:new Date().toISOString()},{onConflict:'key'});
-      if(error) throw error;
-    } catch(e) { console.error('Cloud save failed for '+key,e); setStatus('云端保存失败：'+(e.message||e),'error'); }
-  });
-}
-
-localStorage.setItem = function(k,v) {
-  _origSet(k,v);
-  if(typeof k === 'string' && k.startsWith('littleSky.')) olsQueueSettingWrite(k,String(v));
-};
-localStorage.removeItem = function(k) {
-  _origDel(k);
-  if(sb && olsCloudSyncReady && !olsSyncingRemote && currentRole === 'admin' && typeof k === 'string' && k.startsWith('littleSky.')) {
-    olsWriteQueue = olsWriteQueue.then(async()=>{
-      const {error}=await sb.from('app_settings').delete().eq('key',k);
-      if(error) console.error('Cloud delete failed for '+k,error);
+// Sync layer: on load, pull all app_settings into localStorage; on setItem, push to Supabase
+const _origSet = localStorage.setItem.bind(localStorage);
+localStorage.setItem = function(k, v) {
+  _origSet(k, v);
+  if(sb && k.startsWith('littleSky.')) {
+    sb.from('app_settings').upsert({ key: k, value: v }).then(({error}) => {
+      if(error) console.warn('Sync failed for', k, error.message);
     });
   }
 };
-
-// Run only after an authorized member signs in. Existing cloud rows win; admin-only local rows are migrated once.
-async function syncRemoteSettings() {
-  if(!sb || !currentUser || !currentRole) return;
-  olsCloudSyncReady = false;
-  const {data,error} = await sb.from('app_settings').select('key,value');
-  if(error) { setStatus('读取云端设置失败：'+error.message,'error'); return; }
-  const remote = new Map((data||[]).map(row=>[row.key,row.value]));
-  const localKeys = [];
-  for(let i=0;i<localStorage.length;i++) {
-    const key=localStorage.key(i);
-    if(key && key.startsWith('littleSky.')) localKeys.push(key);
+const _origDel = localStorage.removeItem.bind(localStorage);
+localStorage.removeItem = function(k) {
+  _origDel(k);
+  if(sb && k.startsWith('littleSky.')) {
+    sb.from('app_settings').delete().eq('key', k).then(({error}) => {
+      if(error) console.warn('Delete sync failed for', k, error.message);
+    });
   }
-  let changed = false;
-  olsSyncingRemote = true;
-  try {
-    for(const row of (data||[])) {
-      const restored = await olsFromCloudValue(row.value == null ? '' : row.value);
-      if(localStorage.getItem(row.key) !== restored) { _origSet(row.key,restored); changed=true; }
+};
+// Pull settings from Supabase on startup, then re-render key bits
+if(sb) {
+  sb.from('app_settings').select('key,value').then(({data}) => {
+    if(!data) return;
+    let changed = false;
+    data.forEach(row => {
+      const cur = localStorage.getItem(row.key);
+      if(cur !== row.value) { _origSet(row.key, row.value); changed = true; }
+    });
+    if(changed) {
+      // Let sections re-read from localStorage
+      window.dispatchEvent(new Event('settings:synced'));
     }
-  } finally { olsSyncingRemote = false; }
-  if(currentRole === 'admin') {
-    for(const key of localKeys) {
-      if(remote.has(key)) continue;
-      const localValue=localStorage.getItem(key);
-      if(localValue == null) continue;
-      try {
-        const cloudValue=await olsToCloudValue(localValue,key,currentUser.id);
-        const {error:upsertError}=await sb.from('app_settings').upsert({key,value:cloudValue,updated_at:new Date().toISOString()},{onConflict:'key'});
-        if(upsertError) throw upsertError;
-      } catch(e) { console.error('Legacy migration failed for '+key,e); setStatus('本地数据迁移失败：'+key+'；'+(e.message||e),'error'); }
-    }
-  }
-  olsCloudSyncReady = true;
-  await olsWriteQueue;
-  // Modules read localStorage during initial page construction; reload once after cloud hydration.
-  const reloadFlag='ols.settings.hydrated.'+currentUser.id;
-  if(changed && !sessionStorage.getItem(reloadFlag)) {
-    sessionStorage.setItem(reloadFlag,'1');
-    location.reload();
-    return;
-  }
-  if(!changed) sessionStorage.removeItem(reloadFlag);
+  });
 }
+
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
 // 可在 Manage ♡ 里修改，自动存入浏览器
 const DEFAULT_TOGETHER_SINCE = '2024-05-20';
@@ -1248,14 +1133,14 @@ async function loadMemories() {
   }
   const html=await Promise.all(memoryCache.map(async item=>{
     let photo='';
-    if(item.photo_paths&&item.photo_paths.length){const {data:signed,error:signedError}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signedError)console.error('Memory photo URL failed:',item.photo_paths[0],signedError);if(signed&&signed.signedUrl)photo='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy" onerror="this.closest(\'.memory-card\')?.classList.add(\'photo-load-error\')">';}
+    if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)photo='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'">';}
     const actions=currentRole==='admin'?'<div class="memory-card-actions"><button data-edit="'+item.id+'">Edit</button><button data-delete="'+item.id+'">Delete</button></div>':'';
     return '<article class="memory-card">'+photo+'<div class="memory-card-body"><h3>'+safeText(item.title)+'</h3><time>'+safeText(item.memory_date||'')+'</time><p>'+safeText(item.story)+'</p>'+actions+'</div></article>';
   }));
-  if(gallery) { gallery.innerHTML=html.join(''); gallery.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{const card=img.closest('.memory-card');if(card)card.classList.add('photo-load-error');img.remove();},{once:true})); }
+  if(gallery) gallery.innerHTML=html.join('');
   const railHtml=await Promise.all(memoryCache.map(async (item,index)=>{
     let image='<div class="rail-placeholder">♡</div>';
-    if(item.photo_paths&&item.photo_paths.length){const {data:signed,error:signedError}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signedError)console.error('Memory rail photo URL failed:',item.photo_paths[0],signedError);if(signed&&signed.signedUrl)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'rail-placeholder\',textContent:\'♡\'}))">';}
+    if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy">';}
     const tilt=[-2,1.5,-1,2][index%4];
     return '<article class="rail-photo" style="--rail-tilt:'+tilt+'deg">'+image+'<div class="rail-photo-caption">'+safeText(item.title)+'</div><div class="rail-photo-date">'+safeText(item.memory_date||'A LITTLE MOMENT')+'</div></article>';
   }));
@@ -1279,20 +1164,18 @@ async function syncSession(session) {
     if(notice) notice.innerHTML='<p>点击右上角「管理 ♡」登录后查看私密的共享回忆和照片。</p>';
     return;
   }
-  const {data,error}=await supabaseClient.from('couple_member').select('role').eq('user_id',currentUser.id).maybeSingle();
-  if(error&&error.code==='42P01'){await supabaseClient.auth.signOut();setStatus('couple_member 表还不存在。请在下方「首次设置」里运行建表 SQL，然后重新登录。','error');return;}
-  if(error||!data){await supabaseClient.auth.signOut();setStatus('This account is not on the couple access list. Add its UUID to couple_member in Supabase.','error');return;}
+  const {data,error}=await supabaseClient.from('couple_members').select('role').eq('user_id',currentUser.id).maybeSingle();
+  if(error&&error.code==='42P01'){await supabaseClient.auth.signOut();setStatus('couple_members 表还不存在。请在下方「首次设置」里运行建表 SQL，然后重新登录。','error');return;}
+  if(error||!data){await supabaseClient.auth.signOut();setStatus('This account is not on the couple access list. Add its UUID to couple_members in Supabase.','error');return;}
   currentRole=data.role;if(currentRole==='admin')editor.classList.remove('admin-hidden');
   setStatus(currentRole==='admin'?'Administrator access enabled. You can manage memories.':'Viewer access enabled. You can browse but cannot change memories.','success');
-  await syncRemoteSettings();
-  if(!currentUser) return;
   await loadMemories();
 }
 
 async function startBackend(){
   if(!sb){setStatus('Supabase client did not load. Check your internet connection.','error');return;}
   supabaseClient=sb;
-  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();if(sessionError){console.error('Session restore failed:',sessionError);setStatus('登录状态读取失败，请重新登录。','error');}await syncSession(session);
+  const {data:{session}}=await supabaseClient.auth.getSession();await syncSession(session);
   supabaseClient.auth.onAuthStateChange((_event,sessionNow)=>setTimeout(()=>syncSession(sessionNow),0));
 }
 
@@ -1300,7 +1183,7 @@ document.getElementById('signInButton').addEventListener('click',async()=>{
   if(!requireClient())return;
   const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('auth密码').value;
   if(!email||!password){setStatus('Enter your email and password.','error');return;}
-  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+  const {error}=await supabaseClient.auth.signInWith密码({email,password});
   if(error)setStatus('Sign-in failed: '+error.message,'error');
 });
 document.getElementById('signOutButton').addEventListener('click',async()=>{if(!requireClient())return;await supabaseClient.auth.signOut();});
