@@ -12,6 +12,7 @@
 <link href="https://miaoda.feishu.cn/fonts/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <script src="https://fastly.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://fastly.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <style>
@@ -564,6 +565,12 @@ h2 { font-family:var(--font-heading); font-size:clamp(34px,5vw,52px); font-weigh
 @media(max-width:700px){.album-section{padding:48px 0 54px}.album-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}}
 
 </style>
+
+<style>
+.memory-card img { display:block; width:100%; height:auto; object-fit:cover; }
+.memory-card.photo-load-error::before { content:'照片暂时无法加载，请检查登录状态或 Storage 权限'; display:block; padding:12px; color:#8b7180; font-size:12px; background:#f8f1f5; }
+.rail-photo img { display:block; max-width:100%; height:auto; }
+</style>
 </head>
 <body>
 <div id="app">
@@ -1010,6 +1017,59 @@ on conflict (user_id) do update set role = 'viewer';</pre></details>
 const SUPABASE_URL = 'https://ixslwtshfbxhxsgdybvk.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_D8HgIejSZEJQDzZVgX0QcQ_Qt8JWSnu';
 
+// ——— Supabase client + key-value sync layer ———
+let sb = null;
+try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage } }); } catch(e) { console.warn('Supabase init failed', e); }
+
+// Private Storage upload helper. Never use getPublicUrl() for this private bucket.
+// Feature modules store a signed URL for cross-device display; memory records store paths
+// and receive fresh signed URLs every time the gallery is loaded.
+async function uploadPhoto(file, folder) {
+  if(!sb) return null;
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path = (folder || 'misc') + '/' + Date.now() + '-' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '.' + ext;
+  const { error: uploadError } = await sb.storage.from('couple-memories').upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
+  if(uploadError) { console.error('Upload failed', uploadError); throw uploadError; }
+  const { data, error } = await sb.storage.from('couple-memories').createSignedUrl(path, 60 * 60 * 24 * 7);
+  if(error || !data || !data.signedUrl) { console.error('Could not create photo URL', error); throw (error || new Error('Could not create a signed photo URL')); }
+  return data.signedUrl;
+}
+
+// Sync layer: on load, pull all app_settings into localStorage; on setItem, push to Supabase
+const _origSet = localStorage.setItem.bind(localStorage);
+localStorage.setItem = function(k, v) {
+  _origSet(k, v);
+  if(sb && k.startsWith('littleSky.')) {
+    sb.from('app_settings').upsert({ key: k, value: v }).then(({error}) => {
+      if(error) console.warn('Sync failed for', k, error.message);
+    });
+  }
+};
+const _origDel = localStorage.removeItem.bind(localStorage);
+localStorage.removeItem = function(k) {
+  _origDel(k);
+  if(sb && k.startsWith('littleSky.')) {
+    sb.from('app_settings').delete().eq('key', k).then(({error}) => {
+      if(error) console.warn('Delete sync failed for', k, error.message);
+    });
+  }
+};
+// Pull settings from Supabase on startup, then re-render key bits
+if(sb) {
+  sb.from('app_settings').select('key,value').then(({data}) => {
+    if(!data) return;
+    let changed = false;
+    data.forEach(row => {
+      const cur = localStorage.getItem(row.key);
+      if(cur !== row.value) { _origSet(row.key, row.value); changed = true; }
+    });
+    if(changed) {
+      // Let sections re-read from localStorage
+      window.dispatchEvent(new Event('settings:synced'));
+    }
+  });
+}
+
 // ——— 改成你们在一起的那一天（YYYY-MM-DD，本地时间）———
 // 可在 Manage ♡ 里修改，自动存入浏览器
 const DEFAULT_TOGETHER_SINCE = '2024-05-20';
@@ -1082,14 +1142,14 @@ async function loadMemories() {
   }
   const html=await Promise.all(memoryCache.map(async item=>{
     let photo='';
-    if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)photo='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'">';}
+    if(item.photo_paths&&item.photo_paths.length){const {data:signed,error:signedError}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signedError)console.error('Memory photo URL failed:',item.photo_paths[0],signedError);if(signed&&signed.signedUrl)photo='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy" onerror="this.closest(\'.memory-card\')?.classList.add(\'photo-load-error\')">';}
     const actions=currentRole==='admin'?'<div class="memory-card-actions"><button data-edit="'+item.id+'">Edit</button><button data-delete="'+item.id+'">Delete</button></div>':'';
     return '<article class="memory-card">'+photo+'<div class="memory-card-body"><h3>'+safeText(item.title)+'</h3><time>'+safeText(item.memory_date||'')+'</time><p>'+safeText(item.story)+'</p>'+actions+'</div></article>';
   }));
-  if(gallery) gallery.innerHTML=html.join('');
+  if(gallery) { gallery.innerHTML=html.join(''); gallery.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{const card=img.closest('.memory-card');if(card)card.classList.add('photo-load-error');img.remove();},{once:true})); }
   const railHtml=await Promise.all(memoryCache.map(async (item,index)=>{
     let image='<div class="rail-placeholder">♡</div>';
-    if(item.photo_paths&&item.photo_paths.length){const {data:signed}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signed)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy">';}
+    if(item.photo_paths&&item.photo_paths.length){const {data:signed,error:signedError}=await supabaseClient.storage.from('couple-memories').createSignedUrl(item.photo_paths[0],3600);if(signedError)console.error('Memory rail photo URL failed:',item.photo_paths[0],signedError);if(signed&&signed.signedUrl)image='<img src="'+safeText(signed.signedUrl)+'" alt="'+safeText(item.title)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'rail-placeholder\',textContent:\'♡\'}))">';}
     const tilt=[-2,1.5,-1,2][index%4];
     return '<article class="rail-photo" style="--rail-tilt:'+tilt+'deg">'+image+'<div class="rail-photo-caption">'+safeText(item.title)+'</div><div class="rail-photo-date">'+safeText(item.memory_date||'A LITTLE MOMENT')+'</div></article>';
   }));
@@ -1122,9 +1182,9 @@ async function syncSession(session) {
 }
 
 async function startBackend(){
-  if(!window.supabase||!window.supabase.createClient){setStatus('Supabase client did not load. Check your internet connection.','error');return;}
-  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-  const {data:{session}}=await supabaseClient.auth.getSession();await syncSession(session);
+  if(!sb){setStatus('Supabase client did not load. Check your internet connection.','error');return;}
+  supabaseClient=sb;
+  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();if(sessionError){console.error('Session restore failed:',sessionError);setStatus('登录状态读取失败，请重新登录。','error');}await syncSession(session);
   supabaseClient.auth.onAuthStateChange((_event,sessionNow)=>setTimeout(()=>syncSession(sessionNow),0));
 }
 
@@ -1132,7 +1192,7 @@ document.getElementById('signInButton').addEventListener('click',async()=>{
   if(!requireClient())return;
   const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('auth密码').value;
   if(!email||!password){setStatus('Enter your email and password.','error');return;}
-  const {error}=await supabaseClient.auth.signInWith密码({email,password});
+  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
   if(error)setStatus('Sign-in failed: '+error.message,'error');
 });
 document.getElementById('signOutButton').addEventListener('click',async()=>{if(!requireClient())return;await supabaseClient.auth.signOut();});
@@ -1164,9 +1224,9 @@ initCounters();
 
   // 默认 12 个节点，后续可在 Admin 里无限添加
   const DEFAULT_MOMENTS = [
-    {glyph:'☁', title:'The day we met',           date:'Add your date', text:'The first hello. Maybe we didn’t know it yet, but something lovely had just begun.'},
+    {glyph:'☁', title:'我们相遇的那天',           date:'填写日期', text:'第一次说你好。当时或许还不知道，一段美好的故事刚刚开始。'},
     {glyph:'☾', title:'第一次晚安',      date:'填写日期', text:'聊到深夜，谁都不想先说晚安。'},
-    {glyph:'♡', title:'第一次约会',           date:'填写日期', text:'有点紧张，有点兴奋，真希望能重来一遍。'},
+    {glyph:'♡', title:'第一次约会',           date:'填写日期', text:'那天我们坐在同一张椅子上，你点了一杯我不认识的饮料，我紧张得忘了自己点了什么。窗外的猫打了个哈欠，你笑了，我也笑了——原来和喜欢的人待在一起，连沉默都是甜的。'},
     {glyph:'✋', title:'第一次牵手',      date:'填写日期', text:'过马路的时候，你的手握住了我的。世界安静了一秒。'},
     {glyph:'♥', title:'第一次亲吻',          date:'填写日期', text:'那一瞬间，一切都不一样了。'},
     {glyph:'✈', title:'第一次旅行',           date:'填写日期', text:'第一次一起看同一片风景。一切都像冒险。'},
@@ -1715,10 +1775,10 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
 
 /* ===== 添加新时间线节点 ===== */
 (function(){
-  function compress(file, cb){
+  async function compress(file, cb){
     const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
+    img.onload = async () => {
       const max = 800;
       const scale = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement('canvas');
@@ -1726,7 +1786,14 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
       c.height = Math.max(1, Math.round(img.height * scale));
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      cb(c.toDataURL('image/jpeg', .85));
+      // Try Supabase upload first, fall back to data URL
+      try {
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .85));
+        const pubUrl = await uploadPhoto(new File([blob], file.name || 'moment.jpg', { type: 'image/jpeg' }), 'moments');
+        cb(pubUrl || c.toDataURL('image/jpeg', .85));
+      } catch(e) {
+        cb(c.toDataURL('image/jpeg', .85));
+      }
     };
     img.onerror = () => URL.revokeObjectURL(url);
     img.src = url;
@@ -1945,31 +2012,39 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&adminPanel.
   }
   if(lightboxClose) lightboxClose.addEventListener('click', ()=> lightbox.classList.remove('open'));
   if(lightbox) lightbox.addEventListener('click', (e)=>{ if(e.target === lightbox) lightbox.classList.remove('open'); });
-  if(addBtn && input) addBtn.addEventListener('click', ()=>{
+  if(addBtn && input) addBtn.addEventListener('click', async ()=>{
     const files = Array.from(input.files||[]);
     if(!files.length){ addBtn.textContent = '请先选照片'; setTimeout(()=>addBtn.textContent='添加到碎片墙',1200); return; }
+    addBtn.textContent = '上传中…';
     let done = 0;
     const arr = getPhotos();
-    files.forEach(file=>{
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        // 压缩
-        const img = new Image();
-        img.onload = ()=>{
-          const canvas = document.createElement('canvas');
-          const maxW = 600;
-          const scale = Math.min(1, maxW / img.width);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          arr.push({ src: canvas.toDataURL('image/jpeg', .8), caption: '', date: new Date().toISOString().slice(0,10) });
-          done++;
-          if(done === files.length){ savePhotos(arr); render(); input.value=''; addBtn.textContent='已添加 ✓'; setTimeout(()=>addBtn.textContent='添加到碎片墙',1500); }
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
+    for(const file of files){
+      try {
+        // Compress to blob
+        const img = await new Promise((resolve, reject)=>{
+          const fr = new FileReader();
+          fr.onload = ()=>{ const im = new Image(); im.onload=()=>resolve(im); im.onerror=reject; im.src=fr.result; };
+          fr.onerror = reject;
+          fr.readAsDataURL(file);
+        });
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', .85));
+        // Upload to Supabase Storage
+        const url = await uploadPhoto(new File([blob], file.name || 'photo.jpg', { type: 'image/jpeg' }), 'scrapbook');
+        arr.push({ src: url || canvas.toDataURL('image/jpeg', .8), caption: '', date: new Date().toISOString().slice(0,10) });
+      } catch(e) {
+        console.error('Upload failed, falling back to local', e);
+        arr.push({ src: '', caption: '', date: new Date().toISOString().slice(0,10) });
+      }
+      done++;
+    }
+    savePhotos(arr); render(); input.value='';
+    addBtn.textContent='已添加 ✓'; setTimeout(()=>addBtn.textContent='添加到碎片墙',1500);
   });
   render();
 })();
